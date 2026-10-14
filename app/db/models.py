@@ -2,6 +2,7 @@ import enum
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
+from app.core.enums import Medium, SourceKind
 
 from sqlalchemy import (JSON, Column, Enum, ForeignKey, Index, Numeric, String, Table,
                         UniqueConstraint, func)
