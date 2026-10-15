@@ -43,6 +43,15 @@ scrape = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+addopts = "--strict-markers"
+markers = [
+    "unit: pure logic, no I/O",
+    "contract: upstream API response shapes",
+    "contract_live: hits real third-party APIs (nightly only)",
+    "integration: needs MySQL and Redis",
+    "e2e: browser tests",
+    "smoke: read-only checks against a deployed site",
+]
 
 [tool.ruff]
 line-length = 110
