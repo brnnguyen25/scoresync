@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi_cache.decorator import cache
@@ -10,7 +10,7 @@ from app.core.enums import Medium
 from app.db.models import Genre, Media, ScoreSnapshot
 
 router = APIRouter(prefix="/v1/media", tags=["media"])
-NOT_FOUND = {404: {"description": "Media not found"}}
+NOT_FOUND: dict[int | str, dict[str, Any]] = {404: {"description": "Media not found"}}
 MediaId = Annotated[int, Path(ge=1, le=2_147_483_647, description="ScoreSync media ID")]
 ORDER = {
     "-score": (Media.aggregate_score.desc(),),
