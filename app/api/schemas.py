@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated, Generic, TypeVar
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, PlainSerializer, field_validator
 
@@ -8,7 +8,6 @@ from app.core.enums import Medium, SourceKind
 
 # Decimals are exact internally but sent as JSON numbers (Pydantic would send strings by default)
 Score = Annotated[Decimal, PlainSerializer(float, return_type=float, when_used="json")]
-T = TypeVar("T")
 
 
 class MediaSummary(BaseModel):
@@ -49,7 +48,7 @@ class HistoryPoint(BaseModel):
     captured_at: datetime
 
 
-class Page(BaseModel, Generic[T]):
+class Page[T](BaseModel):
     items: list[T]
     total: int
     page: int

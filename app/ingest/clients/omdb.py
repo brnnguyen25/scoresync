@@ -30,9 +30,14 @@ def to_scores(data: dict[str, Any]) -> list[ScoreIn]:
         try:
             normalized = parse_rating(rating["Value"])
         except ValueError:
-            continue                                   # skip "N/A" and oddities, keep the rest
-        scores.append(ScoreIn(
-            source=slug, raw_value=rating["Value"], normalized=normalized,
-            sample_size=votes if slug == "imdb" else None, raw_payload=rating,
-        ))
+            continue  # skip "N/A" and oddities, keep the rest
+        scores.append(
+            ScoreIn(
+                source=slug,
+                raw_value=rating["Value"],
+                normalized=normalized,
+                sample_size=votes if slug == "imdb" else None,
+                raw_payload=rating,
+            )
+        )
     return scores

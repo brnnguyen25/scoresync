@@ -17,8 +17,16 @@ router = APIRouter(tags=["system"])
 @cache(expire=300)
 async def sources(session: SessionDep) -> list[dict]:
     rows = await session.scalars(select(Source).order_by(Source.slug))
-    return [{"slug": s.slug, "name": s.name, "kind": s.kind, "weight": float(s.weight),
-             "last_run_at": s.last_run_at} for s in rows]
+    return [
+        {
+            "slug": s.slug,
+            "name": s.name,
+            "kind": s.kind,
+            "weight": float(s.weight),
+            "last_run_at": s.last_run_at,
+        }
+        for s in rows
+    ]
 
 
 @router.get("/health", include_in_schema=False)
@@ -30,8 +38,12 @@ async def health(session: SessionDep) -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.post("/v1/admin/ingest/{job}", status_code=status.HTTP_202_ACCEPTED,
-             dependencies=[Depends(require_api_key)], summary="Queue an ingestion run")
+@router.post(
+    "/v1/admin/ingest/{job}",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(require_api_key)],
+    summary="Queue an ingestion run",
+)
 async def trigger_ingest(job: Literal["movies", "tv", "games"], pages: int = Query(1, ge=1, le=10)) -> dict:
     task = celery_app.send_task("ingest", args=[job, pages])
     return {"task_id": task.id, "job": job, "pages": pages}

@@ -14,10 +14,10 @@ celery_app = Celery(
 
 celery_app.conf.update(
     timezone="UTC",
-    task_acks_late=True,            # a task is removed from the queue only after it finishes
-    worker_prefetch_multiplier=1,   # each worker takes one long task at a time
-    task_soft_time_limit=25 * 60,   # raises an exception inside the task at 25 min
-    task_time_limit=30 * 60,        # hard kill at 30 min
+    task_acks_late=True,  # a task is removed from the queue only after it finishes
+    worker_prefetch_multiplier=1,  # each worker takes one long task at a time
+    task_soft_time_limit=25 * 60,  # raises an exception inside the task at 25 min
+    task_time_limit=30 * 60,  # hard kill at 30 min
     result_expires=7 * 24 * 3600,
     beat_schedule={
         "movies-nightly": {"task": "ingest", "schedule": crontab(hour=3, minute=0), "args": ("movies", 2)},

@@ -12,7 +12,7 @@ from app.ingest import jobs
 from app.worker.celery_app import celery_app
 
 log = logging.getLogger(__name__)
-CACHE_PREFIX = "scoresync-cache"   # must match the prefix used in Module 7
+CACHE_PREFIX = "scoresync-cache"  # must match the prefix used in Module 7
 
 
 async def _run(job: str, pages: int) -> dict[str, Any]:
@@ -37,12 +37,12 @@ def _clear_api_cache(r: redis.Redis) -> None:
 def ingest(self: Any, job: str, pages: int = 1) -> dict[str, Any]:
     r = redis.Redis.from_url(get_settings().redis_url)
     lock = r.lock(f"lock:ingest:{job}", timeout=35 * 60)
-    if not lock.acquire(blocking=False):             # the same job is already running
+    if not lock.acquire(blocking=False):  # the same job is already running
         log.info("skipping %s: already running", job)
         return {"job": job, "status": "skipped"}
     try:
         result = asyncio.run(_run(job, pages))
-        _clear_api_cache(r)                           # new data → drop stale cached responses
+        _clear_api_cache(r)  # new data → drop stale cached responses
         return result
     except Exception as exc:
         raise self.retry(exc=exc) from exc

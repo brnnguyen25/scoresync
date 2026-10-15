@@ -1,20 +1,12 @@
-import enum
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
-from app.core.enums import Medium, SourceKind
 
-from sqlalchemy import (JSON, Column, Enum, ForeignKey, Index, Numeric, String, Table,
-                        UniqueConstraint, func)
+from sqlalchemy import JSON, Column, Enum, ForeignKey, Index, Numeric, String, Table, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.enums import Medium, SourceKind
 from app.db.base import Base
-
-
-
-
-
-
 
 media_genres = Table(
     "media_genres",
@@ -77,9 +69,9 @@ class ScoreSnapshot(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     media_id: Mapped[int] = mapped_column(ForeignKey("media.id", ondelete="CASCADE"))
     source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"))
-    raw_value: Mapped[str] = mapped_column(String(32))        # exactly as shown: "7.8/10", "92%"
+    raw_value: Mapped[str] = mapped_column(String(32))  # exactly as shown: "7.8/10", "92%"
     normalized: Mapped[Decimal] = mapped_column(Numeric(5, 2))  # 0.00 – 100.00
-    sample_size: Mapped[int | None]                            # number of reviews behind it
+    sample_size: Mapped[int | None]  # number of reviews behind it
     raw_payload: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     captured_at: Mapped[datetime] = mapped_column(server_default=func.now())
 

@@ -11,7 +11,7 @@ Score100 = Annotated[Decimal, Field(ge=0, le=100, max_digits=5, decimal_places=2
 class ScoreIn(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    source: str                       # slug from the sources table, e.g. "metacritic"
+    source: str  # slug from the sources table, e.g. "metacritic"
     raw_value: str = Field(max_length=32)
     normalized: Score100
     sample_size: int | None = Field(default=None, ge=0)
@@ -35,7 +35,7 @@ class MediaIn(BaseModel):
     @field_validator("title")
     @classmethod
     def strip_title(cls, v: str) -> str:
-        return " ".join(v.split())          # collapse stray whitespace and newlines
+        return " ".join(v.split())  # collapse stray whitespace and newlines
 
     @field_validator("genres")
     @classmethod
@@ -44,5 +44,5 @@ class MediaIn(BaseModel):
         for g in v:
             key = g.strip().lower()
             if key:
-                seen[key] = None                # dict keeps order and removes duplicates
+                seen[key] = None  # dict keeps order and removes duplicates
         return list(seen)

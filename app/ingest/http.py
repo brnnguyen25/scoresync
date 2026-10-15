@@ -15,7 +15,7 @@ def make_client() -> httpx.AsyncClient:
 
 
 def _is_retryable(exc: BaseException) -> bool:
-    if isinstance(exc, httpx.TransportError):           # timeouts, dropped connections
+    if isinstance(exc, httpx.TransportError):  # timeouts, dropped connections
         return True
     if isinstance(exc, httpx.HTTPStatusError):
         return exc.response.status_code in {429, 500, 502, 503, 504}

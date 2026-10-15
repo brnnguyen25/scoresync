@@ -14,7 +14,8 @@ class WeightedScore:
     kind: SourceKind
     sample_size: int | None = None
 
-PRIOR_MEAN = Decimal("70")     # C: a typical user score
+
+PRIOR_MEAN = Decimal("70")  # C: a typical user score
 PRIOR_WEIGHT = Decimal("100")  # m: how many reviews the prior counts as
 
 
@@ -38,7 +39,8 @@ def _weighted_mean(items: list[WeightedScore]) -> Decimal | None:
 def combine(scores: list[WeightedScore]) -> tuple[Decimal | None, Decimal | None, Decimal | None]:
     """Return (critic, user, aggregate). Thin user samples are dropped."""
     usable = [
-        s for s in map(_shrink, scores)
+        s
+        for s in map(_shrink, scores)
         if s.kind is SourceKind.critic or (s.sample_size or 0) >= MIN_USER_SAMPLE
     ]
     critic = _weighted_mean([s for s in usable if s.kind is SourceKind.critic])

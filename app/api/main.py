@@ -20,10 +20,10 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     redis = aioredis.from_url(settings.redis_url)
-    app.state.redis = redis                 # shared with the rate limiter
+    app.state.redis = redis  # shared with the rate limiter
     FastAPICache.init(RedisBackend(redis), prefix=CACHE_PREFIX, key_builder=url_key_builder)
     yield
-    await redis.close()          # close(), not aclose(): fastapi-cache2 pins redis-py 4.x
+    await redis.close()  # close(), not aclose(): fastapi-cache2 pins redis-py 4.x
     await engine.dispose()
 
 
@@ -31,9 +31,9 @@ app = FastAPI(
     title="ScoreSync API",
     version="1.0.0",
     description="Critic and user scores for movies, TV, and games from multiple platforms, "
-                "normalized to a 0–100 scale. Data via TMDB, OMDb, RAWG, OpenCritic, and Steam.",
+    "normalized to a 0–100 scale. Data via TMDB, OMDb, RAWG, OpenCritic, and Steam.",
     lifespan=lifespan,
-    dependencies=[Depends(rate_limit)],   # runs the rate limiter before every endpoint
+    dependencies=[Depends(rate_limit)],  # runs the rate limiter before every endpoint
 )
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])

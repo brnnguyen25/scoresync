@@ -55,8 +55,9 @@ async def list_media(
     rows = await session.scalars(
         stmt.order_by(*ORDER[sort], Media.id).offset((page - 1) * page_size).limit(page_size)
     )
-    return Page(items=[MediaSummary.model_validate(m) for m in rows],
-                total=total or 0, page=page, page_size=page_size)
+    return Page(
+        items=[MediaSummary.model_validate(m) for m in rows], total=total or 0, page=page, page_size=page_size
+    )
 
 
 @router.get("/{media_id}", response_model=MediaDetail, summary="One title with every source's latest score")
@@ -67,15 +68,27 @@ async def get_media(media_id: int, session: SessionDep) -> MediaDetail:
         raise HTTPException(404, "Media not found")
 
     # Window function: number each source's snapshots newest-first, keep #1
-    rn = func.row_number().over(partition_by=ScoreSnapshot.source_id,
-                                order_by=ScoreSnapshot.captured_at.desc()).label("rn")
+    rn = (
+        func.row_number()
+        .over(partition_by=ScoreSnapshot.source_id, order_by=ScoreSnapshot.captured_at.desc())
+        .label("rn")
+    )
     ranked = select(ScoreSnapshot.id, rn).where(ScoreSnapshot.media_id == media_id).subquery()
     snaps = await session.scalars(
         select(ScoreSnapshot).join(ranked, ranked.c.id == ScoreSnapshot.id).where(ranked.c.rn == 1)
     )
-    scores = [ScoreOut(source=s.source.slug, source_name=s.source.name, kind=s.source.kind,
-                       raw_value=s.raw_value, normalized=s.normalized, sample_size=s.sample_size,
-                       captured_at=s.captured_at) for s in snaps]
+    scores = [
+        ScoreOut(
+            source=s.source.slug,
+            source_name=s.source.name,
+            kind=s.source.kind,
+            raw_value=s.raw_value,
+            normalized=s.normalized,
+            sample_size=s.sample_size,
+            captured_at=s.captured_at,
+        )
+        for s in snaps
+    ]
     summary = MediaSummary.model_validate(media)
     return MediaDetail(**summary.model_dump(), scores=sorted(scores, key=lambda s: s.source))
 
@@ -84,8 +97,8 @@ async def get_media(media_id: int, session: SessionDep) -> MediaDetail:
 @cache(expire=300)
 async def get_history(media_id: int, session: SessionDep) -> list[HistoryPoint]:
     snaps = await session.scalars(
-        select(ScoreSnapshot).where(ScoreSnapshot.media_id == media_id)
-        .order_by(ScoreSnapshot.captured_at)
+        select(ScoreSnapshot).where(ScoreSnapshot.media_id == media_id).order_by(ScoreSnapshot.captured_at)
     )
-    return [HistoryPoint(source=s.source.slug, normalized=s.normalized, captured_at=s.captured_at)
-            for s in snaps]
+    return [
+        HistoryPoint(source=s.source.slug, normalized=s.normalized, captured_at=s.captured_at) for s in snaps
+    ]

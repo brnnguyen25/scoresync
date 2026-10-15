@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     rawg_api_key: str = ""
     rapidapi_key: str = ""
 
-    api_keys: list[str] = []          # keys allowed to call write/admin endpoints
+    api_keys: list[str] = []  # keys allowed to call write/admin endpoints
     cache_ttl_seconds: int = 300
     rate_limit_per_minute: int = 60
 

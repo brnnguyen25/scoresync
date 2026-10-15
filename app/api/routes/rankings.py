@@ -20,17 +20,18 @@ async def top(
     genre: str | None = None,
     limit: int = Query(25, ge=1, le=100),
 ) -> list[MediaSummary]:
-        # Count only sources that actually feed the score: all critic sources, and user sources
+    # Count only sources that actually feed the score: all critic sources, and user sources
     # backed by enough reviews (the same rule combine() applies).
     source_count = (
         select(func.count(func.distinct(ScoreSnapshot.source_id)))
         .join(Source, Source.id == ScoreSnapshot.source_id)
-        .where(ScoreSnapshot.media_id == Media.id,
-               (Source.kind == SourceKind.critic) | (ScoreSnapshot.sample_size >= MIN_USER_SAMPLE))
+        .where(
+            ScoreSnapshot.media_id == Media.id,
+            (Source.kind == SourceKind.critic) | (ScoreSnapshot.sample_size >= MIN_USER_SAMPLE),
+        )
         .scalar_subquery()
     )
-    stmt = select(Media).where(Media.medium == medium, Media.aggregate_score.is_not(None),
-                               source_count >= 2)
+    stmt = select(Media).where(Media.medium == medium, Media.aggregate_score.is_not(None), source_count >= 2)
     if year:
         stmt = stmt.where(Media.release_year == year)
     if genre:

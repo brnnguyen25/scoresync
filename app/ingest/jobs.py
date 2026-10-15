@@ -15,7 +15,7 @@ from app.normalize.schemas import MediaIn
 
 log = logging.getLogger(__name__)
 CONCURRENCY = 4
-OPENCRITIC_MAX_PER_RUN = 20   # protects the free daily quota
+OPENCRITIC_MAX_PER_RUN = 20  # protects the free daily quota
 
 
 async def _optional[T](label: str, coro: Awaitable[T]) -> T | None:
@@ -44,7 +44,7 @@ async def _run(sm: async_sessionmaker[AsyncSession], job: str, items: list[Media
         sources = {src.slug: src for src in (await s.scalars(select(Source))).all()}
         for item in items:
             try:
-                async with s.begin_nested():             # SAVEPOINT: one bad title can't sink the batch
+                async with s.begin_nested():  # SAVEPOINT: one bad title can't sink the batch
                     await pipeline.save(s, item, sources)
                 run.items_ok += 1
             except Exception as exc:  # noqa: BLE001 — log and continue
@@ -78,10 +78,15 @@ async def ingest_screen(sm: async_sessionmaker[AsyncSession], medium: Medium, pa
 
 async def ingest_games(sm: async_sessionmaker[AsyncSession], pages: int = 1) -> IngestRun:
     sem = asyncio.Semaphore(CONCURRENCY)
-    oc_sem = asyncio.Semaphore(1)                 # OpenCritic's free tier rejects bursts
-    async with sm() as s:   # reuse OpenCritic IDs we already know
-        known_oc = dict((await s.execute(select(Media.rawg_id, Media.opencritic_id)
-                                         .where(Media.opencritic_id.is_not(None)))).all())
+    oc_sem = asyncio.Semaphore(1)  # OpenCritic's free tier rejects bursts
+    async with sm() as s:  # reuse OpenCritic IDs we already know
+        known_oc = dict(
+            (
+                await s.execute(
+                    select(Media.rawg_id, Media.opencritic_id).where(Media.opencritic_id.is_not(None))
+                )
+            ).all()
+        )
     oc_budget = OPENCRITIC_MAX_PER_RUN
 
     async with make_client() as client:
@@ -101,12 +106,14 @@ async def ingest_games(sm: async_sessionmaker[AsyncSession], pages: int = 1) -> 
                     if oc_id is None and oc_budget > 0:
                         oc_budget -= 1
                         oc_id = await _optional(
-                            "opencritic search", _paced(oc_sem, opencritic.find_id(client, item.title)))
+                            "opencritic search", _paced(oc_sem, opencritic.find_id(client, item.title))
+                        )
                     if oc_id is not None and oc_budget > 0:
                         oc_budget -= 1
                         updates["opencritic_id"] = oc_id
                         if sc := await _optional(
-                                "opencritic score", _paced(oc_sem, opencritic.fetch_score(client, oc_id))):
+                            "opencritic score", _paced(oc_sem, opencritic.fetch_score(client, oc_id))
+                        ):
                             extra.append(sc)
                     return item.model_copy(update={**updates, "scores": [*item.scores, *extra]})
                 except Exception as exc:  # noqa: BLE001

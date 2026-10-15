@@ -1,12 +1,12 @@
 import enum
 
 
-class Medium(str, enum.Enum):
+class Medium(enum.StrEnum):
     movie = "movie"
     tv = "tv"
     game = "game"
 
 
-class SourceKind(str, enum.Enum):
+class SourceKind(enum.StrEnum):
     critic = "critic"
     user = "user"

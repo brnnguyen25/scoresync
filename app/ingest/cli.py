@@ -22,5 +22,5 @@ async def main() -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    logging.getLogger("httpx").setLevel(logging.WARNING)   # its INFO lines print API keys in URLs
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # its INFO lines print API keys in URLs
     asyncio.run(main())
