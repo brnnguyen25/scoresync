@@ -1,0 +1,425 @@
+{
+  "count": 7141,
+  "results": [
+    {
+      "slug": "the-legend-of-zelda-ocarina-of-time",
+      "name": "The Legend of Zelda: Ocarina of Time (1998)",
+      "playtime": 7,
+      "platforms": [
+        {
+          "platform": {
+            "id": 7,
+            "name": "Nintendo Switch",
+            "slug": "nintendo-switch"
+          }
+        },
+        {
+          "platform": {
+            "id": 83,
+            "name": "Nintendo 64",
+            "slug": "nintendo-64"
+          }
+        }
+      ],
+      "stores": [
+        {
+          "store": {
+            "id": 6,
+            "name": "Nintendo Store",
+            "slug": "nintendo"
+          }
+        }
+      ],
+      "released": "1998-11-21",
+      "tba": false,
+      "background_image": "https://media.rawg.io/media/games/3a0/3a0c8e9ed3a711c542218831b893a0fa.jpg",
+      "rating": 4.37,
+      "rating_top": 5,
+      "ratings": [
+        {
+          "id": 5,
+          "title": "exceptional",
+          "count": 581,
+          "percent": 64.41
+        },
+        {
+          "id": 4,
+          "title": "recommended",
+          "count": 199,
+          "percent": 22.06
+        },
+        {
+          "id": 3,
+          "title": "meh",
+          "count": 61,
+          "percent": 6.76
+        },
+        {
+          "id": 1,
+          "title": "skip",
+          "count": 61,
+          "percent": 6.76
+        }
+      ],
+      "ratings_count": 893,
+      "reviews_text_count": 7,
+      "added": 1916,
+      "added_by_status": {
+        "yet": 131,
+        "owned": 504,
+        "beaten": 813,
+        "toplay": 227,
+        "dropped": 185,
+        "playing": 56
+      },
+      "metacritic": 99,
+      "suggestions_count": 356,
+      "updated": "2026-10-07T16:54:50",
+      "id": 25097,
+      "score": null,
+      "clip": null,
+      "tags": [
+        {
+          "id": 31,
+          "name": "Singleplayer",
+          "slug": "singleplayer",
+          "language": "eng",
+          "games_count": 252305,
+          "image_background": "https://media.rawg.io/media/games/4a0/4a0a1316102366260e6f38fd2a9cfdce.jpg"
+        }
+      ],
+      "esrb_rating": {
+        "id": 1,
+        "name": "Everyone",
+        "slug": "everyone",
+        "name_en": "Everyone",
+        "name_ru": "\u0414\u043b\u044f \u0432\u0441\u0435\u0445"
+      },
+      "user_game": null,
+      "reviews_count": 902,
+      "saturated_color": "0f0f0f",
+      "dominant_color": "0f0f0f",
+      "short_screenshots": [
+        {
+          "id": -1,
+          "image": "https://media.rawg.io/media/games/3a0/3a0c8e9ed3a711c542218831b893a0fa.jpg"
+        },
+        {
+          "id": 248572,
+          "image": "https://media.rawg.io/media/screenshots/aff/aff922f4dfbc562ab31b5b924adbfe93.jpg"
+        },
+        {
+          "id": 248573,
+          "image": "https://media.rawg.io/media/screenshots/40a/40aa860328a2295da73336d4060bd973.jpg"
+        },
+        {
+          "id": 248574,
+          "image": "https://media.rawg.io/media/screenshots/e72/e72b59594b6abdedf8adbfd5a0e53251.jpg"
+        },
+        {
+          "id": 248575,
+          "image": "https://media.rawg.io/media/screenshots/070/070de3718e543e7ac533d09a8758775f.jpg"
+        },
+        {
+          "id": 248576,
+          "image": "https://media.rawg.io/media/screenshots/f75/f75e8f877f1851461aba7579ef604f77.jpg"
+        },
+        {
+          "id": 248577,
+          "image": "https://media.rawg.io/media/screenshots/f26/f26c6649ce30ae53204aa7f76350b2fd.jpg"
+        }
+      ],
+      "parent_platforms": [
+        {
+          "platform": {
+            "id": 7,
+            "name": "Nintendo",
+            "slug": "nintendo"
+          }
+        }
+      ],
+      "genres": [
+        {
+          "id": 3,
+          "name": "Adventure",
+          "slug": "adventure"
+        },
+        {
+          "id": 4,
+          "name": "Action",
+          "slug": "action"
+        },
+        {
+          "id": 5,
+          "name": "RPG",
+          "slug": "role-playing-games-rpg"
+        }
+      ]
+    },
+    {
+      "slug": "soulcalibur-1998",
+      "name": "Soulcalibur (1998)",
+      "playtime": 0,
+      "platforms": [
+        {
+          "platform": {
+            "id": 14,
+            "name": "Xbox 360",
+            "slug": "xbox360"
+          }
+        },
+        {
+          "platform": {
+            "id": 106,
+            "name": "Dreamcast",
+            "slug": "dreamcast"
+          }
+        }
+      ],
+      "stores": null,
+      "released": "1998-07-30",
+      "tba": false,
+      "background_image": null,
+      "rating": 0.0,
+      "rating_top": 0,
+      "ratings": [],
+      "ratings_count": 0,
+      "reviews_text_count": 0,
+      "added": 2,
+      "added_by_status": {
+        "yet": 1,
+        "owned": 1
+      },
+      "metacritic": 98,
+      "suggestions_count": 0,
+      "updated": "2020-01-29T13:45:49",
+      "id": 407559,
+      "score": null,
+      "clip": null,
+      "tags": [],
+      "esrb_rating": {
+        "id": 3,
+        "name": "Teen",
+        "slug": "teen",
+        "name_en": "Teen",
+        "name_ru": "\u0421 13 \u043b\u0435\u0442"
+      },
+      "user_game": null,
+      "reviews_count": 0,
+      "community_rating": 0,
+      "saturated_color": "0f0f0f",
+      "dominant_color": "0f0f0f",
+      "short_screenshots": [],
+      "parent_platforms": [
+        {
+          "platform": {
+            "id": 3,
+            "name": "Xbox",
+            "slug": "xbox"
+          }
+        },
+        {
+          "platform": {
+            "id": 11,
+            "name": "SEGA",
+            "slug": "sega"
+          }
+        }
+      ],
+      "genres": [
+        {
+          "id": 6,
+          "name": "Fighting",
+          "slug": "fighting"
+        }
+      ]
+    },
+    {
+      "slug": "soulcalibur",
+      "name": "Soulcalibur",
+      "playtime": 6,
+      "platforms": [
+        {
+          "platform": {
+            "id": 1,
+            "name": "Xbox One",
+            "slug": "xbox-one"
+          }
+        },
+        {
+          "platform": {
+            "id": 3,
+            "name": "iOS",
+            "slug": "ios"
+          }
+        },
+        {
+          "platform": {
+            "id": 21,
+            "name": "Android",
+            "slug": "android"
+          }
+        },
+        {
+          "platform": {
+            "id": 14,
+            "name": "Xbox 360",
+            "slug": "xbox360"
+          }
+        },
+        {
+          "platform": {
+            "id": 106,
+            "name": "Dreamcast",
+            "slug": "dreamcast"
+          }
+        }
+      ],
+      "stores": [
+        {
+          "store": {
+            "id": 7,
+            "name": "Xbox 360 Store",
+            "slug": "xbox360"
+          }
+        }
+      ],
+      "released": "1998-07-30",
+      "tba": false,
+      "background_image": "https://media.rawg.io/media/games/743/7430f1846ba6ce836f169d936c89819e.jpg",
+      "rating": 4.39,
+      "rating_top": 5,
+      "ratings": [
+        {
+          "id": 5,
+          "title": "exceptional",
+          "count": 45,
+          "percent": 52.94
+        },
+        {
+          "id": 4,
+          "title": "recommended",
+          "count": 32,
+          "percent": 37.65
+        },
+        {
+          "id": 3,
+          "title": "meh",
+          "count": 6,
+          "percent": 7.06
+        },
+        {
+          "id": 1,
+          "title": "skip",
+          "count": 2,
+          "percent": 2.35
+        }
+      ],
+      "ratings_count": 84,
+      "reviews_text_count": 1,
+      "added": 301,
+      "added_by_status": {
+        "yet": 14,
+        "owned": 168,
+        "beaten": 73,
+        "toplay": 18,
+        "dropped": 26,
+        "playing": 2
+      },
+      "metacritic": 98,
+      "suggestions_count": 432,
+      "updated": "2026-06-10T17:45:20",
+      "id": 54751,
+      "score": null,
+      "clip": null,
+      "tags": [
+        {
+          "id": 418,
+          "name": "2 players",
+          "slug": "2-players",
+          "language": "eng",
+          "games_count": 1244,
+          "image_background": "https://media.rawg.io/media/screenshots/f9a/f9ac59bb4af2ca2193ee9ffb979577cf.jpg"
+        }
+      ],
+      "esrb_rating": null,
+      "user_game": null,
+      "reviews_count": 85,
+      "saturated_color": "0f0f0f",
+      "dominant_color": "0f0f0f",
+      "short_screenshots": [
+        {
+          "id": -1,
+          "image": "https://media.rawg.io/media/games/743/7430f1846ba6ce836f169d936c89819e.jpg"
+        },
+        {
+          "id": 742333,
+          "image": "https://media.rawg.io/media/screenshots/9a6/9a629f689c5046e8a540bee2fc5d9886.jpg"
+        },
+        {
+          "id": 2006773,
+          "image": "https://media.rawg.io/media/screenshots/ef0/ef065a3a1a2669096285e697d48123ac.jpg"
+        },
+        {
+          "id": 2006774,
+          "image": "https://media.rawg.io/media/screenshots/d3c/d3c0a4a32e6580082fe2a817b68d3738.jpg"
+        },
+        {
+          "id": 2006775,
+          "image": "https://media.rawg.io/media/screenshots/452/4525e59360ba76ed0b64c06fa35c54b2.jpg"
+        },
+        {
+          "id": 2006776,
+          "image": "https://media.rawg.io/media/screenshots/b44/b44045d72c82f0392e86de9ce4d10540.jpg"
+        },
+        {
+          "id": 2006777,
+          "image": "https://media.rawg.io/media/screenshots/9b1/9b173e96f83d2d77770f9b00f2562fa9.jpg"
+        }
+      ],
+      "parent_platforms": [
+        {
+          "platform": {
+            "id": 3,
+            "name": "Xbox",
+            "slug": "xbox"
+          }
+        },
+        {
+          "platform": {
+            "id": 4,
+            "name": "iOS",
+            "slug": "ios"
+          }
+        },
+        {
+          "platform": {
+            "id": 8,
+            "name": "Android",
+            "slug": "android"
+          }
+        },
+        {
+          "platform": {
+            "id": 11,
+            "name": "SEGA",
+            "slug": "sega"
+          }
+        }
+      ],
+      "genres": [
+        {
+          "id": 4,
+          "name": "Action",
+          "slug": "action"
+        },
+        {
+          "id": 6,
+          "name": "Fighting",
+          "slug": "fighting"
+        }
+      ]
+    }
+  ],
+  "user_platforms": false
+}
