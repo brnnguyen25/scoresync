@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import Genre, Media, ScoreSnapshot, Source
 from app.normalize.aggregate import WeightedScore, combine
 from app.normalize.schemas import MediaIn
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 
 ID_FIELDS = ("imdb_id", "rawg_id", "steam_appid", "opencritic_id")
 
@@ -23,12 +24,13 @@ async def _find_existing(s: AsyncSession, item: MediaIn) -> Media | None:
 
 
 async def _genres(s: AsyncSession, names: list[str]) -> list[Genre]:
-    existing = {g.name: g for g in (await s.scalars(select(Genre).where(Genre.name.in_(names)))).all()}
-    for name in names:
-        if name not in existing:
-            existing[name] = Genre(name=name)
-            s.add(existing[name])
-    return [existing[n] for n in names]
+    # Race-safe get-or-create. INSERT IGNORE skips names another job already inserted instead
+    # of raising a duplicate-key error; FOR UPDATE reads the latest committed rows rather than
+    # this transaction's older snapshot (MySQL's default REPEATABLE READ isolation).
+    await s.execute(mysql_insert(Genre).prefix_with("IGNORE").values([{"name": n} for n in names]))
+    rows = await s.scalars(select(Genre).where(Genre.name.in_(names)).with_for_update())
+    by_name = {g.name: g for g in rows}
+    return [by_name[n] for n in names]
 
 
 async def save(s: AsyncSession, item: MediaIn, sources: dict[str, Source]) -> Media:
