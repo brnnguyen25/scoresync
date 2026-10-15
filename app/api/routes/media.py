@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi_cache.decorator import cache
 from sqlalchemy import func, select
 
@@ -10,7 +10,8 @@ from app.core.enums import Medium
 from app.db.models import Genre, Media, ScoreSnapshot
 
 router = APIRouter(prefix="/v1/media", tags=["media"])
-
+NOT_FOUND = {404: {"description": "Media not found"}}
+MediaId = Annotated[int, Path(ge=1, le=2_147_483_647, description="ScoreSync media ID")]
 ORDER = {
     "-score": (Media.aggregate_score.desc(),),
     "score": (Media.aggregate_score.is_(None), Media.aggregate_score.asc()),
@@ -32,7 +33,7 @@ async def list_media(
     min_score: float | None = Query(None, ge=0, le=100, description="Minimum aggregate score"),
     q: str | None = Query(None, min_length=2, max_length=100, description="Title contains"),
     sort: Literal["-score", "score", "-year", "year", "title"] = "-score",
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=10_000),
     page_size: int = Query(20, ge=1, le=100),
 ) -> Page[MediaSummary]:
     stmt = select(Media)
@@ -60,9 +61,14 @@ async def list_media(
     )
 
 
-@router.get("/{media_id}", response_model=MediaDetail, summary="One title with every source's latest score")
+@router.get(
+    "/{media_id}",
+    response_model=MediaDetail,
+    responses=NOT_FOUND,
+    summary="One title with every source's latest score",
+)
 @cache(expire=300)
-async def get_media(media_id: int, session: SessionDep) -> MediaDetail:
+async def get_media(media_id: MediaId, session: SessionDep) -> MediaDetail:
     media = await session.get(Media, media_id)
     if media is None:
         raise HTTPException(404, "Media not found")
@@ -95,7 +101,7 @@ async def get_media(media_id: int, session: SessionDep) -> MediaDetail:
 
 @router.get("/{media_id}/history", response_model=list[HistoryPoint], summary="Score history")
 @cache(expire=300)
-async def get_history(media_id: int, session: SessionDep) -> list[HistoryPoint]:
+async def get_history(media_id: MediaId, session: SessionDep) -> list[HistoryPoint]:
     snaps = await session.scalars(
         select(ScoreSnapshot).where(ScoreSnapshot.media_id == media_id).order_by(ScoreSnapshot.captured_at)
     )
