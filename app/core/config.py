@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     api_keys: list[str] = []          # keys allowed to call write/admin endpoints
     cache_ttl_seconds: int = 300
+    rate_limit_per_minute: int = 60
 
 
 @lru_cache
