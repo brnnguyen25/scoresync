@@ -11,15 +11,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
-class Medium(str, enum.Enum):
-    movie = "movie"
-    tv = "tv"
-    game = "game"
 
 
-class SourceKind(str, enum.Enum):
-    critic = "critic"
-    user = "user"
+
 
 
 media_genres = Table(

@@ -49,3 +49,11 @@ def test_combine_drops_thin_user_samples() -> None:
         WeightedScore(Decimal("10"), Decimal(1), SourceKind.user, sample_size=3),
     ])
     assert (critic, user, agg) == (Decimal("90.00"), None, Decimal("90.00"))
+
+def test_small_user_samples_are_pulled_toward_the_prior() -> None:
+    small = WeightedScore(Decimal("100"), Decimal(1), SourceKind.user, sample_size=30)
+    huge = WeightedScore(Decimal("95"), Decimal(1), SourceKind.user, sample_size=200_000)
+    _, small_user, _ = combine([small])
+    _, huge_user, _ = combine([huge])
+    assert small_user is not None and small_user < Decimal("80")        # 30 perfect reviews aren't trusted
+    assert huge_user is not None and abs(huge_user - Decimal("95")) < 1  # a huge sample barely moves
