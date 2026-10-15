@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: scoresync
+          MYSQL_USER: scoresync
+          MYSQL_PASSWORD: scoresync
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    env:
+      DATABASE_URL: mysql+asyncmy://scoresync:scoresync@127.0.0.1:3306/scoresync
+      REDIS_URL: redis://127.0.0.1:6379/0
+      API_KEYS: '["ci-key"]'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Type check
+        run: uv run mypy app
+      - name: Migrate and seed
+        run: uv run alembic upgrade head && uv run python -m app.db.seed
+      - name: Test
+        run: uv run pytest -q
