@@ -36,6 +36,7 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "respx>=0.23.1",
     "ruff>=0.17.0",
+    "testcontainers[mysql,redis]>=4.13.3",
 ]
 scrape = [
     "playwright>=1.64.0",
@@ -61,6 +62,9 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "S"]
 ignore = ["S101"]                 # allow assert (pytest uses it)
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S106"]           # throwaway credentials for test containers are fine in tests
 
 [tool.mypy]
 python_version = "3.12"
