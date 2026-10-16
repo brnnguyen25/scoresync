@@ -1,13 +1,15 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, PlainSerializer, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, PlainSerializer, field_validator
 
 from app.core.enums import Medium, SourceKind
 
 # Decimals are exact internally but sent as JSON numbers (Pydantic would send strings by default)
 Score = Annotated[Decimal, PlainSerializer(float, return_type=float, when_used="json")]
+# MySQL DATETIME has no zone; ScoreSync stores UTC, so label it as UTC on output
+UtcDatetime = Annotated[datetime, AfterValidator(lambda d: d if d.tzinfo else d.replace(tzinfo=UTC))]
 
 
 class MediaSummary(BaseModel):
@@ -35,7 +37,7 @@ class ScoreOut(BaseModel):
     raw_value: str
     normalized: Score
     sample_size: int | None
-    captured_at: datetime
+    captured_at: UtcDatetime
 
 
 class MediaDetail(MediaSummary):
@@ -45,7 +47,7 @@ class MediaDetail(MediaSummary):
 class HistoryPoint(BaseModel):
     source: str
     normalized: Score
-    captured_at: datetime
+    captured_at: UtcDatetime
 
 
 class Page[T](BaseModel):
