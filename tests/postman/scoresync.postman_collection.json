@@ -1,0 +1,333 @@
+{
+  "info": {
+    "_postman_id": "603740a5-b7be-42bd-8e75-3ef8def2ee07",
+    "name": "scoresync",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "57796317"
+  },
+  "item": [
+    {
+      "name": "health check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"reports ok\", () => pm.expect(pm.response.json().status).to.eql(\"ok\"));"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "filter games by min score",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();\r",
+              "pm.test(\"status is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"responds within 500 ms\", () => pm.expect(pm.response.responseTime).to.be.below(500));\r",
+              "pm.test(\"every result meets min_score\", () => {\r",
+              "  body.items.forEach(i => pm.expect(i.aggregate_score).to.be.at.least(80));\r",
+              "});\r",
+              "// Chain: save the first ID for the next request (empty database → nothing saved)\r",
+              "if (body.items.length) pm.collectionVariables.set(\"mediaId\", body.items[0].id);\r",
+              "else pm.collectionVariables.unset(\"mediaId\");"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/media?medium=game&min_score=80",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v1",
+            "media"
+          ],
+          "query": [
+            {
+              "key": "medium",
+              "value": "game"
+            },
+            {
+              "key": "min_score",
+              "value": "80"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "media detail",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.collectionVariables.get(\"mediaId\")) pm.execution.skipRequest();"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();\r",
+              "pm.test(\"status is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"has a scores list\", () => pm.expect(body.scores).to.be.an(\"array\"));\r",
+              "pm.test(\"timestamps are UTC (regression)\", () => {\r",
+              "  body.scores.forEach(s => pm.expect(s.captured_at).to.match(/(Z|\\+00:00)$/));\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/media/{{mediaId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v1",
+            "media",
+            "{{mediaId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "unknown id",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"unknown id is 404\", () => pm.response.to.have.status(404));"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/media/999999999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v1",
+            "media",
+            "999999999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "huge page returns",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"huge page is rejected with 422 (regression)\", () => pm.response.to.have.status(422));"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/media?page=922337203685477582",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v1",
+            "media"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "922337203685477582"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "tv leadership",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const body = pm.response.json();\r",
+              "pm.test(\"status is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"respects limit\", () => pm.expect(body.length).to.be.at.most(5));\r",
+              "pm.test(\"sorted by score, highest first\", () => {\r",
+              "  for (let i = 1; i < body.length; i++)\r",
+              "    pm.expect(body[i - 1].aggregate_score).to.be.at.least(body[i].aggregate_score);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/rankings/top?medium=tv&limit=5",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v1",
+            "rankings",
+            "top"
+          ],
+          "query": [
+            {
+              "key": "medium",
+              "value": "tv"
+            },
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "admin rejects missing key",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"admin endpoint rejects missing key\", () => pm.response.to.have.status(401));"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v1/admin/ingest/movies",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v1",
+            "admin",
+            "ingest",
+            "movies"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "mediaId",
+      "value": ""
+    }
+  ]
+}

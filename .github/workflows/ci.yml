@@ -40,3 +40,8 @@ jobs:
         run: uv run alembic upgrade head && uv run python -m app.db.seed
       - name: Test
         run: uv run pytest -q
+      - name: Postman collection
+        run: |
+          uv run uvicorn app.api.main:app --port 8000 &
+          sleep 5
+          npx --yes newman run tests/postman/scoresync.postman_collection.json --env-var baseUrl=http://localhost:8000
