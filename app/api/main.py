@@ -43,6 +43,7 @@ async def security_headers(request: Request, call_next: Callable[[Request], Awai
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
     return response
 
 
