@@ -15,7 +15,7 @@ jobs:
       RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
       - run: uv run pytest -m contract_live -v
 
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - run: uv export --format requirements-txt --no-hashes > /tmp/requirements.txt
       - run: uvx pip-audit -r /tmp/requirements.txt
 
@@ -51,7 +51,7 @@ jobs:
       SCHEMATHESIS_MAX_EXAMPLES: "500"
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
       - run: uv run alembic upgrade head && uv run python -m app.db.seed
       - run: uv run pytest tests/integration/test_api_schema.py -v
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
       - name: Mutation testing (3 documented equivalent mutants allowed)
         run: |
