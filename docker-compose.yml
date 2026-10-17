@@ -1,4 +1,47 @@
+x-app: &app
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  image: scoresync:latest
+  env_file: .env
+  environment:
+    DATABASE_URL: mysql+asyncmy://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
+    REDIS_URL: redis://redis:6379/0
+  restart: unless-stopped
+
 services:
+  migrate:
+    <<: *app
+    command: sh -c "alembic upgrade head && python -m app.db.seed"
+    restart: "no"
+    depends_on:
+      mysql: { condition: service_healthy }
+
+  api:
+    <<: *app
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  worker:
+    <<: *app
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  beat:
+    <<: *app
+    command: celery -A app.worker.celery_app beat --loglevel=info --schedule /tmp/celerybeat-schedule
+    depends_on:
+      redis: { condition: service_healthy }
+
   mysql:
     image: mysql:8.4
     restart: unless-stopped
@@ -8,7 +51,6 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
-    ports: ["3306:3306"]
     volumes: [mysql_data:/var/lib/mysql]
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -18,7 +60,10 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
 
 volumes:
   mysql_data:

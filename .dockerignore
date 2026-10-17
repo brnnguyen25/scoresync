@@ -1,0 +1,16 @@
+.venv
+.git
+__pycache__
+*.pyc
+.env
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.hypothesis
+htmlcov
+mutants
+reports
+allure-results
+allure-report
+tests
+docs
