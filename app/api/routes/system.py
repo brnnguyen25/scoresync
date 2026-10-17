@@ -8,6 +8,7 @@ from sqlalchemy import select, text
 from app.api.deps import SessionDep, require_api_key
 from app.core.config import get_settings
 from app.db.models import Source
+from app.quality.checks import run_checks
 from app.worker.celery_app import celery_app
 
 router = APIRouter(tags=["system"])
@@ -47,3 +48,8 @@ async def health(session: SessionDep) -> dict[str, str]:
 async def trigger_ingest(job: Literal["movies", "tv", "games"], pages: int = Query(1, ge=1, le=10)) -> dict:
     task = celery_app.send_task("ingest", args=[job, pages])
     return {"task_id": task.id, "job": job, "pages": pages}
+
+
+@router.get("/v1/admin/quality", dependencies=[Depends(require_api_key)], summary="Data-quality report")
+async def quality(session: SessionDep) -> dict[str, int]:
+    return await run_checks(session)
