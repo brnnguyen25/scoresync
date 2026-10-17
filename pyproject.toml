@@ -30,10 +30,12 @@ dependencies = [
 [dependency-groups]
 dev = [
     "hypothesis>=6.170.0",
+    "mutmut>=3.8.0",
     "mypy>=2.4.0",
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
     "respx>=0.23.1",
     "ruff>=0.17.0",
     "schemathesis>=4.31.1",
@@ -73,3 +75,24 @@ plugins = ["pydantic.mypy"]
 disallow_untyped_defs = true
 warn_unused_ignores = true
 ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+concurrency = ["thread", "greenlet"]
+omit = [
+    "app/ingest/cli.py",          # thin command-line wrapper over jobs
+    "app/db/seed.py",             # one-off setup script, run by CI's migrate step
+    "app/db/recompute_all.py",    # maintenance script
+    "app/ingest/scrapers/*",      # optional scraper, not used in production
+]
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+ail_under = 75
+
+[tool.mutmut]
+source_paths = ["app/normalize/"]
+also_copy = ["app/__init__.py", "app/core/"]
+pytest_add_cli_args = ["-m", "unit"]
+pytest_add_cli_args_test_selection = ["tests/unit/"]

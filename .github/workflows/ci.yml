@@ -45,3 +45,5 @@ jobs:
           uv run uvicorn app.api.main:app --port 8000 &
           sleep 5
           npx --yes newman run tests/postman/scoresync.postman_collection.json --env-var baseUrl=http://localhost:8000
+      - name: Test
+        run: uv run pytest -q --cov --cov-report=term-missing

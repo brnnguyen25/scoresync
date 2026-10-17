@@ -8,3 +8,7 @@ __pycache__/
 .hypothesis/
 zap-report.html
 zap.yaml
+.coverage
+htmlcov/
+coverage.xml
+mutants/

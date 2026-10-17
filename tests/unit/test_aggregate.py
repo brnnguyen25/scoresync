@@ -50,3 +50,27 @@ def test_thin_user_score_does_not_affect_aggregate() -> None:
 
 def test_no_scores_gives_no_result() -> None:
     assert combine([]) == (None, None, None)
+
+
+def test_weights_change_the_mean() -> None:
+    critic, _, aggregate = combine(
+        [
+            WeightedScore(Decimal("90"), Decimal("1"), CRITIC),
+            WeightedScore(Decimal("60"), Decimal("0.5"), CRITIC),
+        ]
+    )
+    # (90 × 1 + 60 × 0.5) ÷ (1 + 0.5) = 120 ÷ 1.5 = 80
+    assert critic == Decimal("80.00")
+    assert aggregate == Decimal("80.00")
+
+
+def test_zero_total_weight_gives_no_score() -> None:
+    critic, _, aggregate = combine([WeightedScore(Decimal("90"), Decimal("0"), CRITIC)])
+    assert critic is None
+    assert aggregate is None
+
+
+def test_mean_rounds_half_up() -> None:
+    critic, _, _ = combine([score(CRITIC, value="80.01"), score(CRITIC, value="80.00")])
+    # (80.01 + 80.00) ÷ 2 = 80.005 → half-up gives 80.01; banker's rounding would give 80.00
+    assert critic == Decimal("80.01")
