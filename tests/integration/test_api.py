@@ -36,3 +36,10 @@ async def test_health_is_ok(client: AsyncClient) -> None:
     r = await client.get("/health")
     assert r.status_code == 200
     assert r.json() == {"status": "ok"}
+
+
+async def test_security_headers_present(client: AsyncClient) -> None:
+    """Found by OWASP ZAP: responses lacked basic security headers."""
+    r = await client.get("/v1/sources")
+    assert r.headers["x-content-type-options"] == "nosniff"
+    assert r.headers["x-frame-options"] == "DENY"
