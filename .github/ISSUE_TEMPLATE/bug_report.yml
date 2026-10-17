@@ -1,0 +1,50 @@
+name: Bug report
+description: Something doesn't behave as specified
+labels: ["type: bug", "status: triage"]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact commands or requests, so anyone can repeat it
+      placeholder: "1. curl ...\n2. Observe ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - "S1 – data loss or outage"
+        - "S2 – major feature broken"
+        - "S3 – minor, workaround exists"
+        - "S4 – cosmetic"
+    validations:
+      required: true
+  - type: input
+    id: found_by
+    attributes:
+      label: Found by
+      placeholder: "Schemathesis / Postman / exploratory session / data-quality check"
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "local / CI / production, plus commit SHA"
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs, screenshots, or failing test
+      render: text
