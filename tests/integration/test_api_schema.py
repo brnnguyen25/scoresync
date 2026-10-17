@@ -1,3 +1,5 @@
+import os
+
 import allure
 import schemathesis
 from hypothesis import settings
@@ -10,6 +12,6 @@ schema = schemathesis.openapi.from_asgi("/openapi.json", app).exclude(path_regex
 
 
 @schema.parametrize()
-@settings(max_examples=50)
+@settings(max_examples=int(os.getenv("SCHEMATHESIS_MAX_EXAMPLES", "50")))
 def test_api_matches_its_own_spec(case: schemathesis.Case) -> None:
     case.call_and_validate()
