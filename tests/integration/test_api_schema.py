@@ -1,7 +1,10 @@
+import allure
 import schemathesis
 from hypothesis import settings
 
 from app.api.main import app
+
+pytestmark = [allure.feature("Public API")]
 
 schema = schemathesis.openapi.from_asgi("/openapi.json", app).exclude(path_regex="^/v1/admin")
 

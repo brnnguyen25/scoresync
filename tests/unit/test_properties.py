@@ -1,9 +1,12 @@
 from decimal import Decimal
 
+import allure
 from hypothesis import given
 from hypothesis import strategies as st
 
 from app.normalize.converters import parse_rating, to_100
+
+pytestmark = [allure.feature("Normalization")]
 
 scores_out_of_10 = st.decimals(min_value=0, max_value=10, places=1)
 

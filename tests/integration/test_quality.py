@@ -2,11 +2,14 @@ from decimal import Decimal
 from typing import Any
 from uuid import uuid4
 
+import allure
 from sqlalchemy import select, text
 
 from app.core.enums import Medium
 from app.db.models import Media, Source
 from app.quality.checks import run_checks
+
+pytestmark = [allure.feature("Data quality")]
 
 
 async def test_detects_out_of_range_score(session_maker: Any) -> None:

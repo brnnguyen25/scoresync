@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
+import allure
+
 from app.ingest.clients import omdb
+
+pytestmark = [allure.feature("Source contracts")]
 
 
 def test_omdb_to_scores_maps_all_three_sources() -> None:

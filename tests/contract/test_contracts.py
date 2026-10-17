@@ -2,12 +2,15 @@ import json
 from pathlib import Path
 from typing import Any
 
+import allure
 import httpx
 import respx
 from pydantic import BaseModel, ConfigDict
 
 from app.core.enums import Medium
-from app.ingest.clients import omdb, rawg, steam, tmdb
+from app.ingest.clients import omdb, opencritic, rawg, steam, tmdb
+
+pytestmark = [allure.feature("Source contracts")]
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -109,3 +112,22 @@ async def test_omdb_unknown_id_returns_none() -> None:
     respx.get(url__startswith="https://www.omdbapi.com/").respond(json=load("omdb_not_found.json"))
     async with httpx.AsyncClient() as client:
         assert await omdb.fetch(client, "tt0000000") is None
+
+
+@respx.mock
+async def test_opencritic_finds_exact_title_after_stripping_year() -> None:
+    """Regression: RAWG titles like 'Soulcalibur (1998)' never matched OpenCritic's 'Soulcalibur'."""
+    respx.get(url__startswith="https://opencritic-api.p.rapidapi.com/game/search").respond(
+        json=[{"id": 99, "name": "Soulcalibur II"}, {"id": 42, "name": "Soulcalibur"}]
+    )
+    async with httpx.AsyncClient() as client:
+        assert await opencritic.find_id(client, "Soulcalibur (1998)") == 42
+
+
+@respx.mock
+async def test_opencritic_minus_one_means_no_score() -> None:
+    respx.get(url__startswith="https://opencritic-api.p.rapidapi.com/game/42").respond(
+        json={"topCriticScore": -1, "numTopCriticReviews": 0, "tier": None}
+    )
+    async with httpx.AsyncClient() as client:
+        assert await opencritic.fetch_score(client, 42) is None

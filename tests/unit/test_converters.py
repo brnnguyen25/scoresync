@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+import allure
 import pytest
 from pydantic import ValidationError
 
@@ -7,6 +8,8 @@ from app.core.enums import Medium, SourceKind
 from app.normalize.aggregate import WeightedScore, combine
 from app.normalize.converters import from_ratio, from_verdict, parse_rating, to_100
 from app.normalize.schemas import MediaIn, ScoreIn
+
+pytestmark = [allure.feature("Normalization")]
 
 
 @pytest.mark.parametrize(
@@ -17,9 +20,18 @@ def test_parse_rating(text: str, expected: str) -> None:
     assert parse_rating(text) == Decimal(expected)
 
 
-@pytest.mark.parametrize("bad", ["N/A", "", "11/10", "abc%", "5/0"])
-def test_parse_rating_rejects_garbage(bad: str) -> None:
-    with pytest.raises(ValueError):
+@pytest.mark.parametrize(
+    ("bad", "message"),
+    [
+        pytest.param("N/A", "unrecognized rating format", id="not-applicable"),
+        pytest.param("", "unrecognized rating format", id="empty"),
+        pytest.param("abc%", "unrecognized rating format", id="non-numeric-percent"),
+        pytest.param("11/10", "outside", id="above-scale"),
+        pytest.param("5/0", "must be positive", id="zero-scale"),
+    ],
+)
+def test_parse_rating_rejects_garbage(bad: str, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
         parse_rating(bad)
 
 
@@ -60,3 +72,8 @@ def test_small_user_samples_are_pulled_toward_the_prior() -> None:
     _, huge_user, _ = combine([huge])
     assert small_user is not None and small_user < Decimal("80")  # 30 perfect reviews aren't trusted
     assert huge_user is not None and abs(huge_user - Decimal("95")) < 1  # a huge sample barely moves
+
+
+def test_unknown_verdict_is_rejected() -> None:
+    with pytest.raises(ValueError, match="unknown verdict"):
+        from_verdict("Kinda Okay")
