@@ -39,11 +39,26 @@ jobs:
       - name: Migrate and seed
         run: uv run alembic upgrade head && uv run python -m app.db.seed
       - name: Test
-        run: uv run pytest -q
+        run: >
+          uv run pytest -q --cov --cov-report=term-missing
+          --junitxml=reports/junit.xml --alluredir=allure-results
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test results
+          path: reports/junit.xml
+          reporter: java-junit
+      - name: Upload Allure results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results
+          path: allure-results
       - name: Postman collection
         run: |
-          uv run uvicorn app.api.main:app --port 8000 &
-          sleep 5
+          .venv/bin/uvicorn app.api.main:app --port 8000 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID' EXIT
+          for i in $(seq 1 30); do curl -fs http://localhost:8000/health && break; sleep 1; done
           npx --yes newman run tests/postman/scoresync.postman_collection.json --env-var baseUrl=http://localhost:8000
-      - name: Test
-        run: uv run pytest -q --cov --cov-report=term-missing
