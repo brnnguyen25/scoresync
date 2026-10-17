@@ -1,0 +1,71 @@
+name: Nightly
+on:
+  schedule:
+    - cron: "0 6 * * *"     # 06:00 UTC daily
+  workflow_dispatch:        # adds a manual "Run workflow" button
+permissions:
+  contents: read
+jobs:
+  live-contracts:
+    runs-on: ubuntu-latest
+    env:
+      LIVE_CONTRACTS: "1"
+      OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
+      TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+      RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run pytest -m contract_live -v
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv export --format requirements-txt --no-hashes > /tmp/requirements.txt
+      - run: uvx pip-audit -r /tmp/requirements.txt
+
+  deep-fuzz:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: scoresync
+          MYSQL_USER: scoresync
+          MYSQL_PASSWORD: scoresync
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    env:
+      DATABASE_URL: mysql+asyncmy://scoresync:scoresync@127.0.0.1:3306/scoresync
+      REDIS_URL: redis://127.0.0.1:6379/0
+      API_KEYS: '["ci-key"]'
+      SCHEMATHESIS_MAX_EXAMPLES: "500"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run alembic upgrade head && uv run python -m app.db.seed
+      - run: uv run pytest tests/integration/test_api_schema.py -v
+
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - name: Mutation testing (3 documented equivalent mutants allowed)
+        run: |
+          uv run mutmut run
+          uv run mutmut results | tee mutmut-results.txt
+          survivors=$(grep -c ": survived" mutmut-results.txt || true)
+          echo "Surviving mutants: $survivors"
+          test "$survivors" -le 3
