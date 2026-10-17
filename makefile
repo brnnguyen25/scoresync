@@ -20,3 +20,6 @@ up:
 
 down:
 	docker compose down
+
+ready:
+	uv run ruff format . && uv run ruff check --fix . && uv run mypy app && uv run pytest
