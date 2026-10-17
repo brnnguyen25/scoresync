@@ -48,3 +48,4 @@ async def test_security_headers_present(client: AsyncClient) -> None:
     r = await client.get("/v1/sources")
     assert r.headers["x-content-type-options"] == "nosniff"
     assert r.headers["x-frame-options"] == "DENY"
+    assert r.headers["cross-origin-resource-policy"] == "cross-origin"
