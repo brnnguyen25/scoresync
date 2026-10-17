@@ -14,7 +14,7 @@ jobs:
       TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
       RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --locked
       - run: uv run pytest -m contract_live -v
@@ -22,7 +22,7 @@ jobs:
   dependency-audit:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       - run: uv export --format requirements-txt --no-hashes > /tmp/requirements.txt
       - run: uvx pip-audit -r /tmp/requirements.txt
@@ -50,7 +50,7 @@ jobs:
       API_KEYS: '["ci-key"]'
       SCHEMATHESIS_MAX_EXAMPLES: "500"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --locked
       - run: uv run alembic upgrade head && uv run python -m app.db.seed
@@ -59,7 +59,7 @@ jobs:
   mutation:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --locked
       - name: Mutation testing (3 documented equivalent mutants allowed)
