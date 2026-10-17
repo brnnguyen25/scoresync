@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 from decimal import Decimal
 from uuid import uuid4
 
+import allure
 import pytest
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -12,6 +13,8 @@ from app.db.models import Genre, Media, Source
 from app.db.session import make_engine
 from app.ingest import pipeline
 from app.normalize.schemas import MediaIn, ScoreIn
+
+pytestmark = [allure.feature("Ingestion")]
 
 # NullPool engine: each test may run in its own event loop
 sm = async_sessionmaker(make_engine(for_worker=True), expire_on_commit=False)
@@ -53,6 +56,7 @@ async def cleanup() -> AsyncIterator[tuple[list[int], list[str]]]:
         await s.commit()
 
 
+@allure.severity(allure.severity_level.CRITICAL)
 async def test_saved_title_gets_cached_scores(cleanup: tuple[list[int], list[str]]) -> None:
     """Regression: duplicate enum classes made every cached score silently NULL."""
     rawg_ids, _ = cleanup
@@ -67,6 +71,7 @@ async def test_saved_title_gets_cached_scores(cleanup: tuple[list[int], list[str
     assert media.aggregate_score is not None
 
 
+@allure.severity(allure.severity_level.CRITICAL)
 async def test_concurrent_saves_share_a_new_genre(cleanup: tuple[list[int], list[str]]) -> None:
     """Regression: two jobs inserting the same new genre at once raised a duplicate-key error."""
     rawg_ids, genres = cleanup
@@ -74,10 +79,12 @@ async def test_concurrent_saves_share_a_new_genre(cleanup: tuple[list[int], list
     genres.append(genre)
     rawg_ids.extend(ids := [unique_id(), unique_id()])
 
-    await asyncio.gather(save(game("Race A", ids[0], [genre])), save(game("Race B", ids[1], [genre])))
+    with allure.step("Save two titles with the same brand-new genre at the same time"):
+        await asyncio.gather(save(game("Race A", ids[0], [genre])), save(game("Race B", ids[1], [genre])))
 
-    async with sm() as s:
-        saved = await s.scalar(select(func.count()).select_from(Media).where(Media.rawg_id.in_(ids)))
-        rows = (await s.scalars(select(Genre).where(Genre.name == genre))).all()
-    assert saved == 2  # both titles saved: no duplicate-key failure
-    assert len(rows) == 1  # exactly one genre row
+    with allure.step("Check both titles saved and the genre exists once"):
+        async with sm() as s:
+            saved = await s.scalar(select(func.count()).select_from(Media).where(Media.rawg_id.in_(ids)))
+            rows = (await s.scalars(select(Genre).where(Genre.name == genre))).all()
+        assert saved == 2  # both titles saved: no duplicate-key failure
+        assert len(rows) == 1  # exactly one genre row

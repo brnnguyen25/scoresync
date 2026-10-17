@@ -1,8 +1,11 @@
 from decimal import Decimal
 
+import allure
 import pytest
 
 from app.normalize.converters import from_ratio, to_100
+
+pytestmark = [allure.feature("Normalization")]
 
 
 @pytest.mark.parametrize(

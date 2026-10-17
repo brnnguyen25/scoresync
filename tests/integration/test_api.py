@@ -1,4 +1,7 @@
+import allure
 from httpx import AsyncClient
+
+pytestmark = [allure.feature("Public API")]
 
 
 async def test_min_score_filter(client: AsyncClient, two_games: list[int]) -> None:
@@ -25,12 +28,14 @@ async def test_admin_requires_key(client: AsyncClient) -> None:
     assert (await client.post("/v1/admin/ingest/games")).status_code == 401
 
 
+@allure.severity(allure.severity_level.CRITICAL)
 async def test_page_above_limit_is_422(client: AsyncClient) -> None:
     """Regression for #N: a huge page number overflowed MySQL's OFFSET and returned 500."""
     r = await client.get("/v1/media", params={"page": 922337203685477582})
     assert r.status_code == 422
 
 
+@allure.severity(allure.severity_level.CRITICAL)
 async def test_health_is_ok(client: AsyncClient) -> None:
     """Regression: /health called redis-py 5's aclose() on redis-py 4 and returned 500."""
     r = await client.get("/health")

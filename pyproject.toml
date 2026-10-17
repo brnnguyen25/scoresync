@@ -29,6 +29,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "allure-pytest>=2.16.2",
     "hypothesis>=6.170.0",
     "mutmut>=3.8.0",
     "mypy>=2.4.0",
@@ -89,7 +90,7 @@ omit = [
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-ail_under = 75
+fail_under = 75
 
 [tool.mutmut]
 source_paths = ["app/normalize/"]

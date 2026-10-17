@@ -12,3 +12,6 @@ zap.yaml
 htmlcov/
 coverage.xml
 mutants/
+reports/
+allure-results/
+allure-report/

@@ -1,9 +1,12 @@
 from decimal import Decimal
 
+import allure
 import pytest
 
 from app.core.enums import SourceKind
 from app.normalize.aggregate import MIN_USER_SAMPLE, WeightedScore, combine
+
+pytestmark = [allure.feature("Scoring")]
 
 CRITIC = SourceKind.critic
 USER = SourceKind.user

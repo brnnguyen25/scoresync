@@ -3,12 +3,15 @@ from types import SimpleNamespace
 from typing import Any
 from uuid import uuid4
 
+import allure
 import pytest
 import redis.asyncio as aioredis
 from fastapi import HTTPException
 
 from app.api import ratelimit
 from app.core.config import get_settings
+
+pytestmark = [allure.feature("Security")]
 
 FIXED_NOW = 1_800_000_000.0  # a fixed moment, so the test can't straddle a minute boundary
 
@@ -27,6 +30,7 @@ def three_per_minute(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(ratelimit.time, "time", lambda: FIXED_NOW)
 
 
+@allure.severity(allure.severity_level.CRITICAL)
 async def test_allows_up_to_limit_then_returns_429(three_per_minute: None) -> None:
     redis = aioredis.from_url(get_settings().redis_url)
     request = fake_request(redis)

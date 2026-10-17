@@ -2,12 +2,15 @@ import json
 from pathlib import Path
 from typing import Any
 
+import allure
 import httpx
 import respx
 from pydantic import BaseModel, ConfigDict
 
 from app.core.enums import Medium
 from app.ingest.clients import omdb, opencritic, rawg, steam, tmdb
+
+pytestmark = [allure.feature("Source contracts")]
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

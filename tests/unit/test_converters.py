@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+import allure
 import pytest
 from pydantic import ValidationError
 
@@ -7,6 +8,8 @@ from app.core.enums import Medium, SourceKind
 from app.normalize.aggregate import WeightedScore, combine
 from app.normalize.converters import from_ratio, from_verdict, parse_rating, to_100
 from app.normalize.schemas import MediaIn, ScoreIn
+
+pytestmark = [allure.feature("Normalization")]
 
 
 @pytest.mark.parametrize(
