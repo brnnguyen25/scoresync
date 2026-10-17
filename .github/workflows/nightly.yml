@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   live-contracts:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       LIVE_CONTRACTS: "1"
       OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
@@ -20,7 +20,7 @@ jobs:
       - run: uv run pytest -m contract_live -v
 
   dependency-audit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -28,7 +28,7 @@ jobs:
       - run: uvx pip-audit -r /tmp/requirements.txt
 
   deep-fuzz:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       mysql:
         image: mysql:8.4
@@ -57,7 +57,7 @@ jobs:
       - run: uv run pytest tests/integration/test_api_schema.py -v
 
   mutation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
