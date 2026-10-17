@@ -34,7 +34,7 @@ async def health(session: SessionDep) -> dict[str, str]:
     await session.execute(text("SELECT 1"))
     r = aioredis.from_url(get_settings().redis_url)
     await r.ping()
-    await r.aclose()
+    await r.close()
     return {"status": "ok"}
 
 

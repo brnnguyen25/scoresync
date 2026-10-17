@@ -29,3 +29,10 @@ async def test_page_above_limit_is_422(client: AsyncClient) -> None:
     """Regression for #N: a huge page number overflowed MySQL's OFFSET and returned 500."""
     r = await client.get("/v1/media", params={"page": 922337203685477582})
     assert r.status_code == 422
+
+
+async def test_health_is_ok(client: AsyncClient) -> None:
+    """Regression: /health called redis-py 5's aclose() on redis-py 4 and returned 500."""
+    r = await client.get("/health")
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok"}
