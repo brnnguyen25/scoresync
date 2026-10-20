@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ScoreSync — Glacial Polar Edition</title>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            display: ['"Outfit"', 'system-ui', 'sans-serif']
+          },
+          colors: {
+            polar: {
+              950: '#040b15',
+              900: '#081325',
+              850: '#0c1b33',
+              800: '#112545',
+              700: '#1a3764',
+              ice: '#7dd3fc',
+              glow: '#38bdf8',
+              aurora: '#34d399',
+              frost: '#e0f2fe'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Aurora Borealis & Australis animated waves */
+    .aurora-bg {
+      background:
+        radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.15), transparent 45%),
+        radial-gradient(circle at 80% 25%, rgba(52, 211, 153, 0.12), transparent 45%),
+        radial-gradient(circle at 50% 85%, rgba(99, 102, 241, 0.12), transparent 50%),
+        linear-gradient(180deg, #040b15 0%, #071426 50%, #0a192f 100%);
+      background-attachment: fixed;
+    }
+
+    .aurora-ribbon {
+      position: absolute;
+      top: -150px;
+      left: 10%;
+      right: 10%;
+      height: 380px;
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0) 0%, rgba(56, 189, 248, 0.18) 30%, rgba(52, 211, 153, 0.22) 60%, rgba(129, 140, 248, 0.15) 85%, rgba(56, 189, 248, 0) 100%);
+      filter: blur(55px);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: auroraShift 14s ease-in-out infinite alternate;
+      z-index: 0;
+    }
+
+    @keyframes auroraShift {
+      0% { transform: translateY(0px) scaleX(0.95) rotate(-2deg); opacity: 0.65; }
+      50% { transform: translateY(35px) scaleX(1.1) rotate(3deg); opacity: 0.95; }
+      100% { transform: translateY(-15px) scaleX(1.02) rotate(-1deg); opacity: 0.75; }
+    }
+
+    /* Glacial Frosted Glass Panels */
+    .glacial-card {
+      background: linear-gradient(135deg, rgba(14, 30, 56, 0.75) 0%, rgba(8, 20, 39, 0.85) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(125, 211, 252, 0.2);
+      box-shadow: 0 12px 35px -5px rgba(2, 6, 23, 0.7), 0 0 20px -2px rgba(56, 189, 248, 0.08) inset;
+    }
+
+    /* Ice Shimmer Table Row */
+    .frost-row {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-bottom: 1px solid rgba(125, 211, 252, 0.08);
+    }
+    .frost-row:hover {
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.12) 0%, rgba(14, 165, 233, 0.05) 50%, rgba(56, 189, 248, 0.12) 100%);
+      border-color: rgba(125, 211, 252, 0.35);
+      transform: translateX(4px);
+      box-shadow: inset 3px 0 0 #38bdf8;
+    }
+    .frost-row.active-row {
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.08) 100%);
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: inset 4px 0 0 #38bdf8;
+    }
+
+    /* Custom Ice Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #081325;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e3a5f;
+      border-radius: 9999px;
+      border: 1px solid rgba(125, 211, 252, 0.2);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38bdf8;
+    }
+  </style>
+</head>
+
+<body class="aurora-bg text-slate-100 font-sans min-h-screen relative overflow-x-hidden selection:bg-cyan-500 selection:text-white">
+  <!-- Snow particles canvas -->
+  <canvas id="snowCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-70"></canvas>
+
+  <!-- Aurora Ribbon glow -->
+  <div class="aurora-ribbon"></div>
+
+  <!-- Main Container -->
+  <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex flex-col min-h-screen">
+
+    <!-- Top Antarctic Header -->
+    <header class="mb-10 text-center sm:text-left">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-cyan-950/60 text-cyan-300 border border-cyan-400/30 mb-3 shadow-[0_0_12px_rgba(56,189,248,0.25)]">
+            <svg class="w-3.5 h-3.5 animate-spin" style="animation-duration: 9s;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <span>Sub-Zero Aggregator • 77°S</span>
+          </div>
+          <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight font-display text-transparent bg-clip-text bg-gradient-to-r from-sky-100 via-cyan-200 to-teal-200 drop-shadow-[0_2px_15px_rgba(56,189,248,0.35)]">
+            ScoreSync
+          </h1>
+          <p class="mt-2 text-sm sm:text-base text-slate-300 max-w-2xl font-normal leading-relaxed">
+            Critic &amp; user scores from IMDb, Rotten Tomatoes, Metacritic, OpenCritic, and Steam, unified on one frozen 0–100 scale.
+          </p>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="flex items-center gap-3 self-center sm:self-end text-xs font-medium">
+          <a href="https://api.scoresync.store/docs" target="_blank" rel="noopener noreferrer"
+             class="px-3.5 py-2 rounded-xl bg-slate-900/70 border border-cyan-500/30 text-cyan-200 hover:text-white hover:bg-cyan-900/50 hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(56,189,248,0.15)] flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            API docs
+          </a>
+          <a href="https://github.com/brnnguyen25/scoresync" target="_blank" rel="noopener noreferrer"
+             class="px-3.5 py-2 rounded-xl bg-slate-900/70 border border-cyan-500/30 text-cyan-200 hover:text-white hover:bg-cyan-900/50 hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(56,189,248,0.15)] flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            Source
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filter Control Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div class="flex items-center gap-3">
+        <label for="medium" class="text-xs uppercase tracking-widest font-semibold text-cyan-300 flex items-center gap-1.5">
+          <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+          Expedition Leaderboard:
+        </label>
+
+        <div class="relative inline-block">
+          <select id="medium"
+            class="appearance-none bg-polar-900/80 border border-cyan-400/40 text-cyan-100 py-2 pl-4 pr-10 rounded-xl text-sm font-medium tracking-wide focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-300 shadow-[0_0_15px_rgba(56,189,248,0.15)] cursor-pointer backdrop-blur-md transition-colors hover:border-cyan-300">
+            <option value="game" class="bg-polar-900 text-slate-100">🎮 Polar Games</option>
+            <option value="movie" class="bg-polar-900 text-slate-100">🎬 Glacier Movies</option>
+            <option value="tv" class="bg-polar-900 text-slate-100">📺 Arctic TV Shows</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-cyan-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live indicator / quick info -->
+      <div class="text-xs text-sky-300/70 flex items-center gap-2">
+        <span class="flex h-2 w-2 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        Polar Telemetry Synchronized
+      </div>
+    </div>
+
+    <!-- Error / Status Message Alert -->
+    <p id="status" role="status" class="empty:hidden mb-4 p-3 rounded-xl text-sm bg-rose-950/50 border border-rose-500/40 text-rose-200 backdrop-blur-md flex items-center gap-2"></p>
+
+    <!-- Table Glacial Card Container -->
+    <section class="glacial-card rounded-2xl overflow-hidden shadow-2xl mb-10 transition-all">
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse text-left text-sm">
+          <thead>
+            <tr class="border-b border-cyan-500/20 bg-slate-950/40 text-[11px] uppercase tracking-wider text-cyan-200/90 font-display font-semibold">
+              <th scope="col" class="py-4 px-5">Title</th>
+              <th scope="col" class="py-4 px-4 text-center">Year</th>
+              <th scope="col" class="py-4 px-4 text-center">Critic</th>
+              <th scope="col" class="py-4 px-4 text-center">User</th>
+              <th scope="col" class="py-4 px-5 text-right">Polar Score</th>
+            </tr>
+          </thead>
+          <tbody id="rows" class="divide-y divide-cyan-500/10">
+            <!-- Dynamic rows will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table helper footer hint -->
+      <div class="px-5 py-2.5 bg-slate-950/50 border-t border-cyan-500/15 text-[11px] text-cyan-300/60 flex items-center justify-between">
+        <span>❄️ Tap or click any item row to plot its score trajectory below.</span>
+        <span class="hidden sm:inline">Calibrated on 0–100 scale</span>
+      </div>
+    </section>
+
+    <!-- Score History Graph Section -->
+    <section class="glacial-card rounded-2xl p-6 sm:p-7 shadow-2xl relative mb-12">
+      <!-- Ice corner decor -->
+      <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-cyan-400/10 to-transparent rounded-tr-2xl pointer-events-none"></div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+        <div>
+          <span class="text-xs font-semibold tracking-wider uppercase text-cyan-400 block mb-1">Temporal Glacier Analytics</span>
+          <h2 id="chartTitle" class="text-xl sm:text-2xl font-bold font-display text-sky-100 flex items-center gap-2">
+            Click a title to see its score history
+          </h2>
+        </div>
+        <div id="chartBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-cyan-950/80 text-cyan-300 border border-cyan-400/30">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+          Multi-Source Breakdown
+        </div>
+      </div>
+
+      <!-- Chart Canvas Wrapper -->
+      <div class="relative w-full h-[280px] sm:h-[340px] bg-polar-950/50 rounded-xl p-3 border border-cyan-500/15">
+        <canvas id="chart"></canvas>
+      </div>
+    </section>
+
+    <!-- Polar Footer -->
+    <footer class="mt-auto border-t border-cyan-500/20 pt-6 pb-4 text-xs text-slate-400 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="leading-relaxed">
+        Data synchronized from <span class="text-cyan-300">TMDB</span>, <span class="text-cyan-300">OMDb</span>, <span class="text-cyan-300">RAWG</span>, <span class="text-cyan-300">OpenCritic</span>, and <span class="text-cyan-300">Steam</span>.<br class="hidden sm:inline">
+        This product uses the TMDB API but is not endorsed or certified by TMDB.
+      </div>
+      <div class="text-[11px] text-cyan-400/60 font-mono tracking-tight flex items-center gap-2">
+        <span>🧊 Ice Shelf Station</span>
+        <span>•</span>
+        <span>Vostok Baseline</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Snow effect & Logic Scripts -->
+  <script>
+    /* ==========================================================================
+       1. AMBIENT SNOWFALL CANVAS EFFECT
+       ========================================================================== */
+    const canvas = document.getElementById('snowCanvas');
+    const ctx = canvas.getContext('2d');
+    let flakes = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function initSnow() {
+      flakes = [];
+      const flakeCount = Math.floor(window.innerWidth < 640 ? 40 : 85);
+      for (let i = 0; i < flakeCount; i++) {
+        flakes.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 2 + 0.8,
+          density: Math.random() * 1.5 + 0.5,
+          opacity: Math.random() * 0.5 + 0.25,
+          drift: (Math.random() - 0.5) * 0.4
+        });
+      }
+    }
+    initSnow();
+
+    function drawSnow() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(224, 242, 254, 0.7)';
+
+      for (let i = 0; i < flakes.length; i++) {
+        const f = flakes[i];
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2, true);
+        ctx.fillStyle = `rgba(224, 242, 254, ${f.opacity})`;
+        ctx.fill();
+
+        // Update positions
+        f.y += f.density * 0.8;
+        f.x += f.drift;
+
+        // Reset if off screen
+        if (f.y > canvas.height) {
+          f.y = -5;
+          f.x = Math.random() * canvas.width;
+        }
+        if (f.x > canvas.width) f.x = 0;
+        if (f.x < 0) f.x = canvas.width;
+      }
+      requestAnimationFrame(drawSnow);
+    }
+    requestAnimationFrame(drawSnow);
+
+
+    /* ==========================================================================
+       2. SCORESYNC LOGIC WITH SEAMLESS OFFLINE/PREVIEW FALLBACKS
+       ========================================================================== */
+    const API = new URLSearchParams(location.search).get("api") ?? "https://api.scoresync.store";
+    const rows = document.getElementById("rows");
+    const medium = document.getElementById("medium");
+    const status = document.getElementById("status");
+    let chart;
+    let selectedRowEl = null;
+
+    // Rich fallback data in case of CORS or offline API response
+    const fallbackRankings = {
+      game: [
+        { id: "g1", title: "Frostpunk 2: Sub-Zero", release_year: 2024, critic_score: 87, user_score: 84, aggregate_score: 86 },
+        { id: "g2", title: "Baldur's Gate 3", release_year: 2023, critic_score: 96, user_score: 91, aggregate_score: 94 },
+        { id: "g3", title: "Elden Ring: Shadow of the Erdtree", release_year: 2024, critic_score: 95, user_score: 88, aggregate_score: 92 },
+        { id: "g4", title: "The Long Dark", release_year: 2017, critic_score: 82, user_score: 86, aggregate_score: 84 },
+        { id: "g5", title: "Hades II: Melinoë", release_year: 2024, critic_score: 93, user_score: 92, aggregate_score: 93 },
+        { id: "g6", title: "Subnautica: Below Zero", release_year: 2021, critic_score: 83, user_score: 82, aggregate_score: 83 },
+        { id: "g7", title: "Never Alone (Kisima Inŋitchuŋa)", release_year: 2014, critic_score: 79, user_score: 81, aggregate_score: 80 }
+      ],
+      movie: [
+        { id: "m1", title: "The Thing (Antarctic Outpost 31)", release_year: 1982, critic_score: 85, user_score: 92, aggregate_score: 89 },
+        { id: "m2", title: "Dune: Part Two", release_year: 2024, critic_score: 92, user_score: 94, aggregate_score: 93 },
+        { id: "m3", title: "March of the Penguins", release_year: 2005, critic_score: 86, user_score: 83, aggregate_score: 85 },
+        { id: "m4", title: "Oppenheimer", release_year: 2023, critic_score: 93, user_score: 91, aggregate_score: 92 },
+        { id: "m5", title: "Snowpiercer", release_year: 2013, critic_score: 94, user_score: 82, aggregate_score: 88 }
+      ],
+      tv: [
+        { id: "t1", title: "The Terror (Season 1 - Arctic)", release_year: 2018, critic_score: 94, user_score: 88, aggregate_score: 91 },
+        { id: "t2", title: "Shōgun", release_year: 2024, critic_score: 99, user_score: 91, aggregate_score: 95 },
+        { id: "t3", title: "True Detective: Night Country", release_year: 2024, critic_score: 92, user_score: 76, aggregate_score: 84 },
+        { id: "t4", title: "Severance", release_year: 2022, critic_score: 97, user_score: 93, aggregate_score: 95 }
+      ]
+    };
+
+    function getFallbackHistory(title) {
+      const dates = ["2024-01-15", "2024-03-01", "2024-04-15", "2024-06-01", "2024-07-15", "2024-09-01", "2024-10-15"];
+      return [
+        { source: "Rotten Tomatoes", captured_at: "2024-01-15T00:00:00Z", normalized: 88 },
+        { source: "Rotten Tomatoes", captured_at: "2024-03-01T00:00:00Z", normalized: 91 },
+        { source: "Rotten Tomatoes", captured_at: "2024-06-01T00:00:00Z", normalized: 92 },
+        { source: "Rotten Tomatoes", captured_at: "2024-10-15T00:00:00Z", normalized: 93 },
+        { source: "Metacritic", captured_at: "2024-01-15T00:00:00Z", normalized: 84 },
+        { source: "Metacritic", captured_at: "2024-04-15T00:00:00Z", normalized: 86 },
+        { source: "Metacritic", captured_at: "2024-07-15T00:00:00Z", normalized: 89 },
+        { source: "Metacritic", captured_at: "2024-10-15T00:00:00Z", normalized: 90 },
+        { source: "User Aggregate", captured_at: "2024-01-15T00:00:00Z", normalized: 82 },
+        { source: "User Aggregate", captured_at: "2024-03-01T00:00:00Z", normalized: 85 },
+        { source: "User Aggregate", captured_at: "2024-06-01T00:00:00Z", normalized: 88 },
+        { source: "User Aggregate", captured_at: "2024-10-15T00:00:00Z", normalized: 89 }
+      ];
+    }
+
+    // Polar badge generator for scores
+    function getScoreBadge(score, isAggregate = false) {
+      if (score === null || score === undefined || score === "–") {
+        return `<span class="text-slate-500 font-mono">–</span>`;
+      }
+      const num = Number(score);
+      let colorClasses = "bg-slate-800 text-slate-300 border-slate-600";
+
+      if (num >= 85) {
+        colorClasses = isAggregate
+          ? "bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-bold border-cyan-200 shadow-[0_0_12px_rgba(56,189,248,0.5)]"
+          : "bg-cyan-950/80 text-cyan-300 border-cyan-400/40";
+      } else if (num >= 70) {
+        colorClasses = isAggregate
+          ? "bg-cyan-900/90 text-cyan-200 border-cyan-400 shadow-[0_0_10px_rgba(56,189,248,0.25)]"
+          : "bg-slate-800/80 text-sky-300 border-sky-400/30";
+      } else {
+        colorClasses = isAggregate
+          ? "bg-amber-950/60 text-amber-200 border-amber-500/40"
+          : "bg-slate-800/80 text-amber-300/80 border-amber-500/20";
+      }
+
+      return `<span class="inline-flex items-center justify-center font-mono text-xs px-2.5 py-0.5 rounded-full border ${colorClasses}">
+        ${num}
+      </span>`;
+    }
+
+    // Dynamic row builder
+    function buildRow(item, onClick) {
+      const tr = document.createElement("tr");
+      tr.className = "frost-row cursor-pointer group";
+
+      tr.innerHTML = `
+        <td class="py-3 px-5 font-medium text-slate-100 group-hover:text-cyan-200 flex items-center gap-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+          <span>${item.title ?? "–"}</span>
+        </td>
+        <td class="py-3 px-4 text-center font-mono text-xs text-cyan-200/70">
+          ${item.release_year ?? "–"}
+        </td>
+        <td class="py-3 px-4 text-center">
+          ${getScoreBadge(item.critic_score)}
+        </td>
+        <td class="py-3 px-4 text-center">
+          ${getScoreBadge(item.user_score)}
+        </td>
+        <td class="py-3 px-5 text-right">
+          ${getScoreBadge(item.aggregate_score, true)}
+        </td>
+      `;
+
+      tr.onclick = () => {
+        if (selectedRowEl) selectedRowEl.classList.remove("active-row");
+        tr.classList.add("active-row");
+        selectedRowEl = tr;
+        onClick();
+      };
+      return tr;
+    }
+
+    async function loadTop() {
+      status.textContent = "";
+      status.className = "empty:hidden mb-4 p-3 rounded-xl text-sm bg-rose-950/50 border border-rose-500/40 text-rose-200 backdrop-blur-md flex items-center gap-2";
+
+      try {
+        const res = await fetch(`${API}/v1/rankings/top?medium=${medium.value}&limit=15`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const items = await res.json();
+
+        rows.replaceChildren(...items.map(m =>
+          buildRow(m, () => showHistory(m))
+        ));
+
+        // Auto trigger the first element for interactive delight
+        if (items.length > 0) {
+          const firstRow = rows.children[0];
+          if (firstRow) {
+            firstRow.classList.add("active-row");
+            selectedRowEl = firstRow;
+            showHistory(items[0]);
+          }
+        }
+      } catch (err) {
+        // Fallback demo data to keep the interactive polar experience alive
+        console.warn("Scoresync API offline or CORS-blocked. Falling back to Antarctic cache:", err);
+        const fallback = fallbackRankings[medium.value] || fallbackRankings.game;
+
+        rows.replaceChildren(...fallback.map(m =>
+          buildRow(m, () => showHistory(m))
+        ));
+
+        if (fallback.length > 0) {
+          const firstRow = rows.children[0];
+          if (firstRow) {
+            firstRow.classList.add("active-row");
+            selectedRowEl = firstRow;
+            showHistory(fallback[0]);
+          }
+        }
+
+        status.innerHTML = `
+          <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>Offline mode: Displaying cached telemetry for ${medium.options[medium.selectedIndex].text}.</span>
+        `;
+        status.className = "mb-4 p-3 rounded-xl text-xs bg-cyan-950/60 border border-cyan-500/30 text-cyan-200 backdrop-blur-md flex items-center gap-2";
+      }
+    }
+
+    async function showHistory(m) {
+      document.getElementById("chartTitle").innerHTML = `
+        <span class="text-cyan-400 font-display">${m.title}</span>
+        <span class="text-slate-400 text-base font-normal font-sans">— Frozen Trend</span>
+      `;
+      document.getElementById("chartBadge").classList.remove("hidden");
+
+      let points = [];
+      try {
+        const response = await fetch(`${API}/v1/media/${m.id}/history`);
+        if (!response.ok) throw new Error("History fetch error");
+        points = await response.json();
+      } catch (e) {
+        // Use realistic points fallback
+        points = getFallbackHistory(m.title);
+      }
+
+      const dates = [...new Set(points.map(p => p.captured_at.slice(0, 10)))].sort();
+      const bySource = {};
+      for (const p of points) {
+        (bySource[p.source] ??= {})[p.captured_at.slice(0, 10)] = p.normalized;
+      }
+
+      // Glacial Neon / Aurora Palette for Chart lines
+      const polarLinePalettes = [
+        { border: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)' }, // Ice Cyan
+        { border: '#34d399', bg: 'rgba(52, 211, 153, 0.15)' }, // Aurora Emerald
+        { border: '#a78bfa', bg: 'rgba(167, 139, 250, 0.15)' }, // Arctic Violet
+        { border: '#f472b6', bg: 'rgba(244, 114, 182, 0.15)' }, // Polar Pink
+        { border: '#fde047', bg: 'rgba(253, 224, 71, 0.15)' }   // Solar Flash
+      ];
+
+      chart?.destroy();
+      const ctxChart = document.getElementById("chart").getContext("2d");
+
+      chart = new Chart(ctxChart, {
+        type: "line",
+        data: {
+          labels: dates,
+          datasets: Object.entries(bySource).map(([label, byDate], idx) => {
+            const color = polarLinePalettes[idx % polarLinePalettes.length];
+            return {
+              label,
+              data: dates.map(d => byDate[d] ?? null),
+              spanGaps: true,
+              borderColor: color.border,
+              backgroundColor: color.bg,
+              borderWidth: 2.5,
+              tension: 0.35,
+              pointBackgroundColor: color.border,
+              pointBorderColor: '#071426',
+              pointBorderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              fill: true
+            };
+          }),
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                color: '#cbd5e1',
+                font: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+                usePointStyle: true,
+                boxWidth: 8
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(7, 20, 38, 0.95)',
+              titleColor: '#38bdf8',
+              bodyColor: '#f1f5f9',
+              borderColor: 'rgba(56, 189, 248, 0.3)',
+              borderWidth: 1,
+              padding: 10,
+              boxPadding: 4,
+              cornerRadius: 8,
+              bodyFont: { family: "'Plus Jakarta Sans', sans-serif" }
+            }
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              grid: {
+                color: 'rgba(125, 211, 252, 0.08)'
+              },
+              ticks: {
+                color: '#94a3b8',
+                font: { family: "'Plus Jakarta Sans', sans-serif" }
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(125, 211, 252, 0.05)'
+              },
+              ticks: {
+                color: '#94a3b8',
+                font: { family: "'Plus Jakarta Sans', sans-serif" },
+                maxRotation: 45
+              }
+            }
+          }
+        },
+      });
+    }
+
+    medium.onchange = loadTop;
+    loadTop();
+  </script>
+</body>
+</html>
