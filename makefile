@@ -23,3 +23,5 @@ down:
 
 ready:
 	uv run ruff format . && uv run ruff check --fix . && uv run mypy app && uv run pytest
+prod-up:
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --wait
