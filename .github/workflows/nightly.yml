@@ -2,7 +2,7 @@ name: Nightly
 on:
   schedule:
     - cron: "0 6 * * *"     # 06:00 UTC daily
-  workflow_dispatch:        # adds a manual "Run workflow" button
+  workflow_dispatch:        # manual "Run workflow" button
 permissions:
   contents: read
 jobs:
@@ -69,3 +69,14 @@ jobs:
           survivors=$(grep -c ": survived" mutmut-results.txt || true)
           echo "Surviving mutants: $survivors"
           test "$survivors" -le 3
+
+  production-data-quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fail if any data-quality check reports problems
+        env:
+          PROD_API_KEY: ${{ secrets.PROD_API_KEY }}
+        run: |
+          report=$(curl -fsS -H "X-API-Key: $PROD_API_KEY" https://api.scoresync.store/v1/admin/quality)
+          echo "$report"
+          echo "$report" | python3 -c "import json,sys; sys.exit(1 if any(json.load(sys.stdin).values()) else 0)"
