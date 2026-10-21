@@ -1,61 +1,72 @@
+# ScoreSync
+
 ![CI](https://github.com/brnnguyen25/scoresync/actions/workflows/ci.yml/badge.svg)
+![Nightly](https://github.com/brnnguyen25/scoresync/actions/workflows/nightly.yml/badge.svg)
 
-checks_total.......: 3304    30.181152/s
-    checks_succeeded...: 100.00% 3304 out of 3304
-    checks_failed......: 0.00%   0 out of 3304
+A public API that unifies critic and user review scores for movies, TV, and games
+from IMDb, Rotten Tomatoes, Metacritic, OpenCritic, and Steam onto one 0–100 scale.
 
-    ✓ rankings 200
-    ✓ list 200
+**Live demo:** https://scoresync.store · **API docs:** https://api.scoresync.store/docs · **Video:** [2-minute walkthrough](LINK)
 
-    HTTP
-    http_req_duration..............: avg=4.59ms min=1.59ms med=3.14ms max=401.36ms p(90)=8.51ms p(95)=9.76ms
-      { expected_response:true }...: avg=4.59ms min=1.59ms med=3.14ms max=401.36ms p(90)=8.51ms p(95)=9.76ms
-    http_req_failed................: 0.00%  0 out of 3304
-    http_reqs......................: 3304   30.181152/s
+![ScoreSync demo page](docs/img/demo.png)
 
-    EXECUTION
-    iteration_duration.............: avg=1.01s  min=1s     med=1s     max=1.04s    p(90)=1.01s  p(95)=1.02s
-    iterations.....................: 1652   15.090576/s
-    vus............................: 1      min=1         max=20
-    vus_max........................: 20     min=20        max=20
+## Architecture
 
-    NETWORK
-    data_received..................: 14 MB  128 kB/s
-    data_sent......................: 339 kB 3.1 kB/s
+```mermaid
+flowchart LR
+  S[TMDB · OMDb · RAWG · OpenCritic · Steam] -->|httpx + retries| W[Celery worker]
+  B[Celery beat] -->|nightly| R[(Redis)]
+  R --> W
+  W -->|Pydantic → 0–100| M[(MySQL 8)]
+  C[Browser / clients] -->|HTTPS| X[Caddy] --> A[FastAPI]
+  A <--> R
+  A --> M
+```
 
+## Highlights
+- [400] titles across movies, TV, and games, refreshed nightly from five sources
+- Scores normalized to 0–100; user scores use a Bayesian average so small samples can't top the charts
+- Score history stored as snapshots, so scoring changes are rebuilt without re-fetching
+- Redis caching: p95 [X] ms with cache vs [Y] ms without (k6, 20 virtual users)
+- Docker Compose on AWS Lightsail behind Caddy (automatic HTTPS), with push-to-deploy and post-deploy smoke tests
 
+## Testing
+| Layer | Tools | Tests |
+| --- | --- | --- |
+| Unit | pytest, Hypothesis (property-based), boundary-value and decision-table tests | [N] |
+| Contract | Recorded and live checks of every source API's response shape | [N] |
+| Integration | Testcontainers MySQL/Redis; Schemathesis fuzzing from the OpenAPI spec | [N] |
+| End-to-end | Playwright with page objects, network stubbing, XSS and outage cases | 4 |
+| Production | Post-deploy smoke tests; nightly data-quality checks | 4 + 5 checks |
 
+- **Coverage:** 76% branch coverage, enforced in CI with a ratchet
+- **Mutation score:** 97% on the scoring logic (3 documented equivalent mutants)
+- **Security:** OWASP ZAP API scan (118 passed, 0 failed), nightly pip-audit, gitleaks pre-commit hook
+- **Nightly CI:** live API contracts, deep fuzzing, mutation gate, dependency audit, production data quality
 
-running (1m49.5s), 00/20 VUs, 1652 complete and 0 interrupted iterations
-default ✓ [ 100% ] 00/20 VUs  1m45s
+Risk analysis and full bug log: [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md) · Security decisions: [docs/SECURITY_REVIEW.md](docs/SECURITY_REVIEW.md)
 
- █ TOTAL RESULTS
+## Bugs found by testing
+[6] issues found and fixed, each guarded by a regression test. Highlights:
+- **XSS on the demo page:** API-supplied titles were rendered as HTML; caught by a Playwright regression test
+- **Silent blank scores:** duplicate enum classes made every cached score NULL, with no error raised
+- **Concurrency race:** parallel ingest jobs collided on new genres under REPEATABLE READ
+- **A rate limiter that limited nothing:** a library silently stopped working under new FastAPI routing
+- **500 on huge page numbers:** found by Schemathesis fuzzing (MySQL OFFSET overflow)
+- **Vulnerable dependency:** nightly pip-audit flagged certifi the day its advisory was published; patched and deployed the same day
 
-    checks_total.......: 3280    29.925211/s
-    checks_succeeded...: 100.00% 3280 out of 3280
-    checks_failed......: 0.00%   0 out of 3280
+## Design decisions
+- **Official APIs instead of scraping** review sites: terms of service and reliability
+- **Decimal scores** for exact rounding; **snapshots** for score history
+- **Rankings count only contributing sources:** real data showed the original rule emptied the TV leaderboard
+- **Honest failure states:** the demo page shows an error during outages rather than placeholder data
 
-    ✓ rankings 200
-    ✓ list 200
+## Run it locally
+```bash
+cp .env.example .env    # add your API keys
+docker compose up -d --build --wait
+# API docs at http://localhost:8000/docs
+```
 
-    HTTP
-    http_req_duration..............: avg=8.6ms min=1.77ms med=6.44ms max=461.64ms p(90)=16.69ms p(95)=20.84ms
-      { expected_response:true }...: avg=8.6ms min=1.77ms med=6.44ms max=461.64ms p(90)=16.69ms p(95)=20.84ms
-    http_req_failed................: 0.00%  0 out of 3280
-    http_reqs......................: 3280   29.925211/s
-
-    EXECUTION
-    iteration_duration.............: avg=1.01s min=1s     med=1.01s  max=1.08s    p(90)=1.03s   p(95)=1.03s
-    iterations.....................: 1640   14.962605/s
-    vus............................: 1      min=1         max=20
-    vus_max........................: 20     min=20        max=20
-
-    NETWORK
-    data_received..................: 14 MB  127 kB/s
-    data_sent......................: 336 kB 3.1 kB/s
-
-
-
-
-running (1m49.6s), 00/20 VUs, 1640 complete and 0 interrupted iterations
-default ✓ [ 100% ] 00/20 VUs  1m45s
+## Data attribution
+Data from TMDB, OMDb, RAWG, OpenCritic, and Steam. This product uses the TMDB API but is not endorsed or certified by TMDB.
