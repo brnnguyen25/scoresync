@@ -42,7 +42,7 @@ jobs:
         run: uv run alembic upgrade head && uv run python -m app.db.seed
       - name: Test
         run: >
-          uv run pytest -q --cov --cov-report=term-missing
+          uv run pytest -q -m "not e2e" --cov --cov-report=term-missing
           --junitxml=reports/junit.xml --alluredir=allure-results
       - name: Publish test results
         uses: dorny/test-reporter@v1
@@ -64,3 +64,17 @@ jobs:
           trap 'kill $SERVER_PID' EXIT
           for i in $(seq 1 30); do curl -fs http://localhost:8000/health && break; sleep 1; done
           npx --yes newman run tests/postman/scoresync.postman_collection.json --env-var baseUrl=http://localhost:8000
+
+  e2e:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run playwright install --with-deps chromium
+      - run: uv run pytest -m e2e --tracing retain-on-failure
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results

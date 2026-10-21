@@ -13,7 +13,7 @@ _containers: list[Any] = []
 
 def _needs_database(config: pytest.Config) -> bool:
     expr = config.option.markexpr or ""
-    return not expr or "integration" in expr  # full run, or integration selected
+    return not expr or "integration" in expr or "not " in expr
 
 
 def pytest_configure(config: pytest.Config) -> None:
