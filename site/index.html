@@ -180,15 +180,14 @@
         </div>
       </div>
 
-      <!-- Live indicator / quick info -->
+      <!-- Live indicator: updated by setLive() -->
       <div class="text-xs text-sky-300/70 flex items-center gap-2">
         <span class="flex h-2 w-2 relative">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          <span id="livePing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span id="liveDot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
-        Polar Telemetry Synchronized
+        <span id="liveText">Connecting…</span>
       </div>
-    </div>
 
     <!-- Error / Status Message Alert -->
     <p id="status" role="status" class="empty:hidden mb-4 p-3 rounded-xl text-sm bg-rose-950/50 border border-rose-500/40 text-rose-200 backdrop-blur-md flex items-center gap-2"></p>
@@ -319,58 +318,27 @@
 
 
     /* ==========================================================================
-       2. SCORESYNC LOGIC WITH SEAMLESS OFFLINE/PREVIEW FALLBACKS
-       ========================================================================== */
+       2. SCORESYNC LOGIC: LIVE DATA ONLY, WITH HONEST ERROR STATES
+    ========================================================================== */
     const API = new URLSearchParams(location.search).get("api") ?? "https://api.scoresync.store";
     const rows = document.getElementById("rows");
     const medium = document.getElementById("medium");
     const status = document.getElementById("status");
     let chart;
     let selectedRowEl = null;
-
-    // Rich fallback data in case of CORS or offline API response
-    const fallbackRankings = {
-      game: [
-        { id: "g1", title: "Frostpunk 2: Sub-Zero", release_year: 2024, critic_score: 87, user_score: 84, aggregate_score: 86 },
-        { id: "g2", title: "Baldur's Gate 3", release_year: 2023, critic_score: 96, user_score: 91, aggregate_score: 94 },
-        { id: "g3", title: "Elden Ring: Shadow of the Erdtree", release_year: 2024, critic_score: 95, user_score: 88, aggregate_score: 92 },
-        { id: "g4", title: "The Long Dark", release_year: 2017, critic_score: 82, user_score: 86, aggregate_score: 84 },
-        { id: "g5", title: "Hades II: Melinoë", release_year: 2024, critic_score: 93, user_score: 92, aggregate_score: 93 },
-        { id: "g6", title: "Subnautica: Below Zero", release_year: 2021, critic_score: 83, user_score: 82, aggregate_score: 83 },
-        { id: "g7", title: "Never Alone (Kisima Inŋitchuŋa)", release_year: 2014, critic_score: 79, user_score: 81, aggregate_score: 80 }
-      ],
-      movie: [
-        { id: "m1", title: "The Thing (Antarctic Outpost 31)", release_year: 1982, critic_score: 85, user_score: 92, aggregate_score: 89 },
-        { id: "m2", title: "Dune: Part Two", release_year: 2024, critic_score: 92, user_score: 94, aggregate_score: 93 },
-        { id: "m3", title: "March of the Penguins", release_year: 2005, critic_score: 86, user_score: 83, aggregate_score: 85 },
-        { id: "m4", title: "Oppenheimer", release_year: 2023, critic_score: 93, user_score: 91, aggregate_score: 92 },
-        { id: "m5", title: "Snowpiercer", release_year: 2013, critic_score: 94, user_score: 82, aggregate_score: 88 }
-      ],
-      tv: [
-        { id: "t1", title: "The Terror (Season 1 - Arctic)", release_year: 2018, critic_score: 94, user_score: 88, aggregate_score: 91 },
-        { id: "t2", title: "Shōgun", release_year: 2024, critic_score: 99, user_score: 91, aggregate_score: 95 },
-        { id: "t3", title: "True Detective: Night Country", release_year: 2024, critic_score: 92, user_score: 76, aggregate_score: 84 },
-        { id: "t4", title: "Severance", release_year: 2022, critic_score: 97, user_score: 93, aggregate_score: 95 }
-      ]
-    };
-
-    function getFallbackHistory(title) {
-      const dates = ["2024-01-15", "2024-03-01", "2024-04-15", "2024-06-01", "2024-07-15", "2024-09-01", "2024-10-15"];
-      return [
-        { source: "Rotten Tomatoes", captured_at: "2024-01-15T00:00:00Z", normalized: 88 },
-        { source: "Rotten Tomatoes", captured_at: "2024-03-01T00:00:00Z", normalized: 91 },
-        { source: "Rotten Tomatoes", captured_at: "2024-06-01T00:00:00Z", normalized: 92 },
-        { source: "Rotten Tomatoes", captured_at: "2024-10-15T00:00:00Z", normalized: 93 },
-        { source: "Metacritic", captured_at: "2024-01-15T00:00:00Z", normalized: 84 },
-        { source: "Metacritic", captured_at: "2024-04-15T00:00:00Z", normalized: 86 },
-        { source: "Metacritic", captured_at: "2024-07-15T00:00:00Z", normalized: 89 },
-        { source: "Metacritic", captured_at: "2024-10-15T00:00:00Z", normalized: 90 },
-        { source: "User Aggregate", captured_at: "2024-01-15T00:00:00Z", normalized: 82 },
-        { source: "User Aggregate", captured_at: "2024-03-01T00:00:00Z", normalized: 85 },
-        { source: "User Aggregate", captured_at: "2024-06-01T00:00:00Z", normalized: 88 },
-        { source: "User Aggregate", captured_at: "2024-10-15T00:00:00Z", normalized: 89 }
-      ];
+        // Convert characters HTML treats as special into harmless codes, so API text displays as text.
+    function esc(value) {
+      return String(value ?? "–").replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     }
+        // Show whether the data on screen is live, instead of always claiming it is.
+    function setLive(ok) {
+      document.getElementById("liveText").textContent = ok ? "Live data" : "API unavailable";
+      document.getElementById("liveDot").classList.toggle("bg-emerald-500", ok);
+      document.getElementById("liveDot").classList.toggle("bg-rose-500", !ok);
+      document.getElementById("livePing").classList.toggle("hidden", !ok);
+    }
+
 
     // Polar badge generator for scores
     function getScoreBadge(score, isAggregate = false) {
@@ -407,10 +375,10 @@
       tr.innerHTML = `
         <td class="py-3 px-5 font-medium text-slate-100 group-hover:text-cyan-200 flex items-center gap-2">
           <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-          <span>${item.title ?? "–"}</span>
+          <span>${esc(item.title)}</span>
         </td>
         <td class="py-3 px-4 text-center font-mono text-xs text-cyan-200/70">
-          ${item.release_year ?? "–"}
+          ${esc(item.release_year)}
         </td>
         <td class="py-3 px-4 text-center">
           ${getScoreBadge(item.critic_score)}
@@ -444,7 +412,7 @@
         rows.replaceChildren(...items.map(m =>
           buildRow(m, () => showHistory(m))
         ));
-
+        setLive(true);
         // Auto trigger the first element for interactive delight
         if (items.length > 0) {
           const firstRow = rows.children[0];
@@ -454,39 +422,23 @@
             showHistory(items[0]);
           }
         }
-      } catch (err) {
-        // Fallback demo data to keep the interactive polar experience alive
-        console.warn("Scoresync API offline or CORS-blocked. Falling back to Antarctic cache:", err);
-        const fallback = fallbackRankings[medium.value] || fallbackRankings.game;
-
-        rows.replaceChildren(...fallback.map(m =>
-          buildRow(m, () => showHistory(m))
-        ));
-
-        if (fallback.length > 0) {
-          const firstRow = rows.children[0];
-          if (firstRow) {
-            firstRow.classList.add("active-row");
-            selectedRowEl = firstRow;
-            showHistory(fallback[0]);
-          }
-        }
-
-        status.innerHTML = `
-          <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <span>Offline mode: Displaying cached telemetry for ${medium.options[medium.selectedIndex].text}.</span>
-        `;
-        status.className = "mb-4 p-3 rounded-xl text-xs bg-cyan-950/60 border border-cyan-500/30 text-cyan-200 backdrop-blur-md flex items-center gap-2";
+        } catch (err) {
+        console.warn("ScoreSync API unavailable:", err);
+        rows.replaceChildren();
+        status.textContent = "Couldn't load rankings right now. Please try again shortly.";
+        setLive(false);
       }
     }
 
     async function showHistory(m) {
-      document.getElementById("chartTitle").innerHTML = `
-        <span class="text-cyan-400 font-display">${m.title}</span>
-        <span class="text-slate-400 text-base font-normal font-sans">— Frozen Trend</span>
-      `;
+      const chartTitle = document.getElementById("chartTitle");
+      const name = document.createElement("span");
+      name.className = "text-cyan-400 font-display";
+      name.textContent = m.title;                 // textContent: always plain text
+      const suffix = document.createElement("span");
+      suffix.className = "text-slate-400 text-base font-normal font-sans";
+      suffix.textContent = "— score history";
+      chartTitle.replaceChildren(name, suffix);
       document.getElementById("chartBadge").classList.remove("hidden");
 
       let points = [];
@@ -495,8 +447,9 @@
         if (!response.ok) throw new Error("History fetch error");
         points = await response.json();
       } catch (e) {
-        // Use realistic points fallback
-        points = getFallbackHistory(m.title);
+        chart?.destroy();
+        suffix.textContent = "— history unavailable right now";
+        return;
       }
 
       const dates = [...new Set(points.map(p => p.captured_at.slice(0, 10)))].sort();
